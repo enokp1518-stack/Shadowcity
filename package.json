@@ -1,0 +1,12 @@
+{
+  "name": "shadow-city-neon-legends",
+  "version": "1.0.0",
+  "description": "Open-world 3D mobile game — GTA-like, Three.js",
+  "scripts": {
+    "start": "npx serve .",
+    "test": "node test/harness.js"
+  },
+  "dependencies": {
+    "three": "0.152.2"
+  }
+}
