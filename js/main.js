@@ -70,6 +70,9 @@
     if (!G.input.pulse('action')) return;
     const p = G.player;
     if (p.inCar) { G.enterCar(); return; }
+    for (const pr of G.cartel.PROPERTIES) {
+      if (U.d2(p.pos.x, p.pos.z, pr.x, pr.z) < 100) { G.ui.openPhone('cartel'); return; }
+    }
     const sp = nearestSpecial();
     if (sp) {
       if (sp.id === 'gunshop') { G.ui.openPhone('guns'); return; }
@@ -147,6 +150,7 @@
       G.combat.update(dt);
       G.combat.updateProjectiles(dt);
       G.eco.update(dt);
+      G.cartel.update(dt);
       G.modes.update(dt);
       G.world.updateEnvironment(dt);
       handleInteraction();
@@ -213,6 +217,7 @@
   G.initPlayer();
   G.combat.initPlayerCombat();
   G.eco.initLocations();
+  G.cartel.init();
   populate();
   createHelpers();
   G.ui.applySettings();

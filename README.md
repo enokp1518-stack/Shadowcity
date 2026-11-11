@@ -52,6 +52,19 @@ et **5 armes exclusives** :
 
 5 animaux avec bonus (chien aimant à billets, faucon radar, panthère combattante, bébé dragon cracheur de feu, chat-robot +10% revenus) et 6 artefacts à équiper (3 max) : dégâts, vitesse, régénération, revenus, discrétion…
 
+## 📦 Empire « Schedule » (Cartel)
+
+Inspiré de Schedule 1 & 2, un cycle complet de narco-empire (fictif et stylisé) :
+
+- **Propriétés** : Grow House (6 pots), Grow Deluxe (12 pots), Labo clandestin, Planque (+stockage, raids réduits).
+- **Culture** : 3 variétés (Amnésia, OG Kush, Purp Néon) — plante, arrose (sinon croissance ÷7 et qualité en chute), récolte. Les plants poussent en 3D devant ta propriété !
+- **Labo** : 4 recettes (Crystal Néon, Poudre Étoile, Néon Juice, Néon Pur) — réactifs + récolte → produits premium.
+- **Vente** : clients dans la rue (blips 💰 sur la minimap), prix = base × qualité × demande du quartier. Chaque vente génère du **heat** — à 85%+, raides et saisies.
+- **Argent sale** : les ventes paient en argent sale → **blanchiment** via tes business (85%, 2 000$/min par business).
+- **Dealers** : recrute un dealer par quartier (vente auto), fournis-leur du stock.
+- **Contrats** : commandes groupées chronométrées → bonus + réputation (débloque variétés et recettes).
+- **Convois** : envoie 15 unités en ville pour +50% de valeur… avec risque de contrôle policier.
+
 ## 💼 Business & 📺 Carrière de YouTubeur
 
 - 6 entreprises achetables (lavage, station-service, pizzeria, garage, club, casino) avec revenus passifs à encaisser.

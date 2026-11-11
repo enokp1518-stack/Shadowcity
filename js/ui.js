@@ -38,7 +38,7 @@
   let curTab = 'missions';
   const TABS = [
     ['missions', '📋 Contrats'], ['map', '🗺️ Carte'], ['guns', '🔫 Armurerie'],
-    ['pets', '🐾 Animaux'], ['arts', '🔮 Artefacts'], ['biz', '🏢 Business'],
+    ['pets', '🐾 Animaux'], ['arts', '🔮 Artefacts'], ['biz', '🏢 Business'], ['cartel', '📦 Cartel'],
     ['yt', '📺 YouTube'], ['war', '⚔️ Gangs'], ['race', '🏁 Courses'],
     ['settings', '⚙️ Réglages']
   ];
@@ -165,6 +165,10 @@
       c.innerHTML = html;
     }
 
+    if (curTab === 'cartel') {
+      c.innerHTML = money + G.cartel.ui();
+    }
+
     if (curTab === 'yt') {
       const s = G.yt.subs;
       let html = money;
@@ -230,13 +234,18 @@
   $('phoneContent').addEventListener('click', (e) => {
     const b = e.target.closest('button[data-a]');
     if (!b || b.disabled) return;
-    const [act, arg] = b.dataset.a.split(':');
-    phoneAction(act, arg);
+    const parts = b.dataset.a.split(':');
+    phoneAction(parts[0], parts[1], parts[2]);
   });
   $('phoneClose').addEventListener('click', () => UI.closePhone());
 
-  function phoneAction(act, arg) {
+  function phoneAction(act, arg, arg2) {
     G.sfx.ui();
+    if (act === 'cx') {
+      G.cartel.action(arg, arg2);
+      UI.refreshPhone();
+      return;
+    }
     switch (act) {
       case 'medkit': G.eco.buyMedkit(); break;
       case 'record': G.yt.toggleRecord(); break;
@@ -381,6 +390,10 @@
       if (n.type === 'cop' || (G.eco.hasPet('falcon') && (n.type === 'creature' || n.aggro || n.warTag))) {
         ctx.fillStyle = n.type === 'cop' ? '#4d8dff' : '#ff4d4d';
         ctx.beginPath(); ctx.arc(n.obj.position.x, n.obj.position.z, 6, 0, Math.PI * 2); ctx.fill();
+      }
+      if (n.type === 'ped' && n.obj.userData.customer) {
+        ctx.fillStyle = '#ffd23e';
+        ctx.beginPath(); ctx.arc(n.obj.position.x, n.obj.position.z, 7, 0, Math.PI * 2); ctx.fill();
       }
     }
     ctx.restore();

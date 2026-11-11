@@ -215,6 +215,7 @@ G.saveData = function () {
     pets: G.eco.petsOwned, pet: G.eco.activePet,
     artifacts: G.eco.artifactsOwned, equipped: G.eco.equipped,
     yt: { subs: G.yt.subs, views: G.yt.views, videos: G.yt.videos, perks: G.yt.perks },
+    cartel: G.cartel.serialize(),
     missions: G.modes.missionIdx,
     stats: G.stats,
     settings: G.settings,
@@ -242,6 +243,7 @@ G.applySave = function (d) {
   G.eco.petsOwned = d.pets || []; G.eco.activePet = d.pet || null;
   G.eco.artifactsOwned = d.artifacts || []; G.eco.equipped = (d.equipped || []).slice(0, 3);
   if (d.yt) { G.yt.subs = d.yt.subs || 0; G.yt.views = d.yt.views || 0; G.yt.videos = d.yt.videos || 0; G.yt.perks = d.yt.perks || []; }
+  G.cartel.deserialize(d.cartel);
   G.modes.missionIdx = d.missions || 0;
   if (d.stats) Object.assign(G.stats, d.stats);
   if (d.settings) Object.assign(G.settings, d.settings);
