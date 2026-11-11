@@ -6,13 +6,17 @@
   C.SEEDS = {
     amnesia: { name: '🌱 Amnésia', price: 300, growTime: 240, yield: 8, base: 45, rep: 0, desc: 'Classique rentable, pousse vite.' },
     ogkush: { name: '🌱 OG Kush', price: 700, growTime: 300, yield: 10, base: 75, rep: 50, desc: 'Meilleur rendement, clientèle fidèle.' },
-    purp: { name: '🌱 Purp Néon', price: 1800, growTime: 360, yield: 12, base: 130, rep: 150, desc: 'La variété signature de Shadow City.' }
+    purp: { name: '🌱 Purp Néon', price: 1800, growTime: 360, yield: 12, base: 130, rep: 150, desc: 'La variété signature de Shadow City.' },
+    haze: { name: '🌫 Néon Haze', price: 3500, growTime: 420, yield: 14, base: 200, rep: 300, desc: 'Ultra puissante, rendement massif.' },
+    frost: { name: '❄️ Frost Bleu', price: 6000, growTime: 480, yield: 16, base: 280, rep: 500, desc: 'La variété mythique des docks.' }
   };
   C.RECIPES = {
     crystal: { name: '⚗️ Crystal Néon', weed: 'amnesia', weedQty: 8, reagent: 1, time: 180, qty: 6, base: 380, rep: 0, desc: 'Le produit phare des labos.' },
     powder: { name: '⚗️ Poudre Étoile', weed: 'ogkush', weedQty: 12, reagent: 2, time: 240, qty: 6, base: 560, rep: 100, desc: 'Haut de gamme, marge énorme.' },
     juice: { name: '⚗️ Néon Juice', weed: 'amnesia', weedQty: 5, reagent: 1, time: 120, qty: 4, base: 220, rep: 50, desc: 'Production rapide, vente facile.' },
-    purmix: { name: '🧪 Néon Pur', weed: 'crystal', weedQty: 4, reagent: 3, time: 300, qty: 4, base: 950, rep: 250, desc: 'Mélange Schedule 2 — qualité légendaire.', mix: true }
+    purmix: { name: '🧪 Néon Pur', weed: 'crystal', weedQty: 4, reagent: 3, time: 300, qty: 4, base: 950, rep: 250, desc: 'Mélange Schedule 2 — qualité légendaire.', mix: true },
+    elixir: { name: '🧪 Élixir Fantôme', weed: 'purp', weedQty: 10, reagent: 2, time: 240, qty: 6, base: 1200, rep: 300, desc: 'Le produit dont tout le monde parle en secret.' },
+    nova: { name: '💫 Nova Cristal', weed: 'frost', weedQty: 8, reagent: 3, time: 360, qty: 8, base: 1800, rep: 500, desc: 'Le Graal des laboratoires — prix astronomique.', mix: true }
   };
   C.PROPERTIES = [
     { id: 'grow1', name: '🏡 Grow House — Docks', price: 25000, type: 'grow', pots: 6, loc: { i: 2, j: 1, dx: 12, dz: -12 }, desc: '6 pots de culture.' },
@@ -33,6 +37,7 @@
   C.convoy = null;
   C.laundered = 0;
   C.customers = [];
+  C.fideles = [];
   C.plantGroups = {};
   C.raid = null;
   C.raidT = 480;
@@ -249,9 +254,11 @@
       G.combat.crime(p.pos, 1);
       G.ui.toast('👀 Un voisin a tout vu...', 'warn');
     }
-    if (cust.sales >= 3) {
-      cust.obj.userData.customer = false;
-      C.customers = C.customers.filter(c => c !== cust);
+    if (cust.sales >= 3 && !cust.obj.userData.fidele) {
+      cust.obj.userData.fidele = true;
+      C.fideles.push(cust);
+      G.ui.toast('💜 Client fidèle conquis ! Il achète tout seul quand tu passes (prix premium)');
+      G.addXP(25);
     }
   };
 
@@ -263,6 +270,17 @@
       if (d < bd) { bd = d; best = n; }
     }
     return best;
+  };
+
+  C.upgradeDealer = function (idx) {
+    const d = C.dealers[idx];
+    if (!d) return;
+    const lvl = d.lvl || 1;
+    if (lvl >= 3) { G.ui.toast('Dealer déjà au niveau max !', 'warn'); G.sfx.deny(); return; }
+    if (!G.eco.spend(15000 * lvl)) return;
+    d.lvl = lvl + 1;
+    G.ui.toast('🕵️ Dealer niveau ' + d.lvl + ' ! Vente : ' + (2 * d.lvl) + ' u/min', 'money');
+    G.sfx.buy();
   };
 
   C.hireDealer = function (districtId) {
@@ -405,11 +423,41 @@
     C.heat = Math.max(0, C.heat - dt * 0.35);
     C.laundered = Math.max(0, C.laundered - dt * 33.3);
 
+    for (let i = C.fideles.length - 1; i >= 0; i--) {
+      const f = C.fideles[i];
+      if (f.dead || U.d2(f.obj.position.x, f.obj.position.z, G.player.pos.x, G.player.pos.z) > 6400) {
+        f.obj.userData.fidele = false;
+        C.fideles.splice(i, 1);
+        continue;
+      }
+      f.buyT = (f.buyT || 0) + dt;
+      if (f.buyT >= 12) {
+        f.buyT = 0;
+        if (U.d2(f.obj.position.x, f.obj.position.z, G.player.pos.x, G.player.pos.z) < 625) {
+          let bestId = null, bestVal = 0;
+          for (const id in C.products) {
+            const pr = C.products[id];
+            if (pr.qty <= 0) continue;
+            const base = C.SEEDS[id] ? C.SEEDS[id].base : C.RECIPES[id].base;
+            const val = base * pr.quality * 1.3;
+            if (val > bestVal) { bestVal = val; bestId = id; }
+          }
+          if (bestId) {
+            const amount = Math.floor(bestVal * C.demand() * U.rand(0.95, 1.2));
+            C.products[bestId].qty--;
+            C.dirty += amount;
+            G.ui.toast('💜 Client fidèle : achat auto de ' + (C.SEEDS[bestId] || C.RECIPES[bestId]).name + ' → +' + U.fmt(amount), 'money');
+            G.sfx.cash();
+          }
+        }
+      }
+    }
+
     for (const d of C.dealers) {
       d.timer = (d.timer || 0) + dt;
       if (d.timer >= 60 && d.stock > 0) {
         d.timer = 0;
-        const n = Math.min(d.stock, 2);
+        const n = Math.min(d.stock, 2 * (d.lvl || 1));
         d.stock -= n;
         let sum = 0, count = 0;
         for (const id in C.products) {
@@ -520,6 +568,8 @@
     C.dirty = 0; C.heat = 0; C.rep = 0; C.reagent = 0;
     C.dealers = []; C.contract = null; C.convoy = null; C.laundered = 0;
     C.raid = null; C.raidT = 480; C.vegSold = 0;
+    for (const n of G.npcs) if (n.obj.userData.fidele) n.obj.userData.fidele = false;
+    C.fideles = [];
     for (const id in C.veg) C.veg[id].qty = 0;
     for (const id in C.products) { C.products[id].qty = 0; C.products[id].quality = 1; }
     for (const pid in C.props) { C.props[pid].owned = false; C.props[pid].pots = []; C.props[pid].batch = null; }
@@ -615,11 +665,14 @@
     html += `<div class="row"><div class="info"><div class="name">📜 Contrat ${C.contract ? '(' + Math.floor((C.contract.deadline - C.contract.t) / 60) + ' min restantes)' : ''}</div><div class="desc">${C.contract ? C.contract.qty + ' × ' + (C.SEEDS[C.contract.product] || C.RECIPES[C.contract.product]).name + ' → ' + U.fmt(C.contract.reward) + ' (livré ' + C.contract.delivered + '/' + C.contract.qty + ')' : 'Un nouveau contrat arrive bientôt...'}</div></div><button data-a="cx:deliver" ${C.contract ? '' : 'disabled'} class="green">Livrer</button></div>`;
     html += `<div class="row"><div class="info"><div class="name">🚚 Lancer un convoi</div><div class="desc">Envoie 15 unités en ville → vente à +50% (risque de contrôle policier)</div></div><button data-a="cx:convoy" class="gold">Lancer</button></div>`;
 
+    html += `<div class="row"><div class="info"><div class="desc">💜 Clients fidèles : ${C.fideles.length} — vends 3 fois au même client et il achètera tout seul à prix premium quand tu passes</div></div></div>`;
+
     html += '<div class="secTitle">Dealers (vente auto)</div>';
     for (const d of G.world.districts) {
       const mine = C.dealers.findIndex(x => x.district === d.id);
       if (mine >= 0) {
-        html += `<div class="row"><div class="info"><div class="name">🕵️ Dealer — ${d.name}</div><div class="desc">Stock : ${C.dealers[mine].stock} u — vend 2 u/min (−15%)</div></div><button data-a="cx:supply:${mine}" class="green">Fournir ×10</button></div>`;
+        const dl = C.dealers[mine].lvl || 1;
+        html += `<div class="row"><div class="info"><div class="name">🕵️ Dealer — ${d.name}${dl > 1 ? ' (Niv. ' + dl + ')' : ''}</div><div class="desc">Stock : ${C.dealers[mine].stock} u — vend ${2 * dl} u/min (−15%)${dl < 3 ? ' — améliorable' : ' — NIVEAU MAX'}</div></div><div style="display:flex;gap:5px"><button data-a="cx:supply:${mine}" class="green">Fournir ×10</button>${dl < 3 ? `<button data-a="cx:updealer:${mine}" class="gold">${U.fmt(15000 * dl)}</button>` : ''}</div></div>`;
       } else {
         html += `<div class="row"><div class="info"><div class="name">${d.name}</div><div class="desc">Recrute un dealer sur ce territoire</div></div><button data-a="cx:hire:${d.id}">${U.fmt(8000)}</button></div>`;
       }
@@ -645,6 +698,7 @@
       case 'convoy': C.launchConvoy(); break;
       case 'hire': C.hireDealer(arg); break;
       case 'supply': C.supplyDealer(parseInt(arg)); break;
+      case 'updealer': C.upgradeDealer(parseInt(arg)); break;
       case 'launder': C.launder(arg === 'all' ? C.dirty : parseInt(arg)); break;
       case 'veg': C.buyVeg(arg); break;
       case 'harvestveg': C.harvestVeg(); break;

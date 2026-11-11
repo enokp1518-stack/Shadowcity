@@ -69,11 +69,12 @@ et **6 armes exclusives** :
 Inspiré de Schedule 1 & 2, un cycle complet de narco-empire (fictif et stylisé) :
 
 - **Propriétés** : Grow House (6 pots), Grow Deluxe (12 pots), Labo clandestin, Planque (+stockage, raids réduits).
-- **Culture** : 3 variétés (Amnésia, OG Kush, Purp Néon) — plante, arrose (sinon croissance ÷7 et qualité en chute), récolte. Les plants poussent en 3D devant ta propriété !
-- **Labo** : 4 recettes (Crystal Néon, Poudre Étoile, Néon Juice, Néon Pur) — réactifs + récolte → produits premium.
+- **Culture** : 5 variétés (Amnésia, OG Kush, Purp Néon, Néon Haze, Frost Bleu) — plante, arrose (sinon croissance ÷7 et qualité en chute), récolte. Les plants poussent en 3D devant ta propriété !
+- **Labo** : 6 recettes (Crystal Néon, Poudre Étoile, Néon Juice, Néon Pur, Élixir Fantôme, Nova Cristal) — réactifs + récolte → produits premium.
 - **Vente** : clients dans la rue (blips 💰 sur la minimap), prix = base × qualité × demande du quartier. Chaque vente génère du **heat** — à 85%+, raides et saisies.
 - **Argent sale** : les ventes paient en argent sale → **blanchiment** via tes business (85%, 2 000$/min par business).
-- **Dealers** : recrute un dealer par quartier (vente auto), fournis-leur du stock.
+- **Dealers** : recrute un dealer par quartier (vente auto), fournis-leur du stock et **améliore-les niveau 1→3** (2, 4 puis 6 unités/min).
+- 💜 **Clients fidèles** : vends 3 fois au même client et il devient fidèle — il rachète tout seul ton meilleur produit à prix premium (+30%) quand tu passes près de lui.
 - **Contrats** : commandes groupées chronométrées → bonus + réputation (débloque variétés et recettes).
 - **Convois** : envoie 15 unités en ville pour +50% de valeur… avec risque de contrôle policier.
 - **Raids rivaux** : toutes les ~8 minutes, un cartel rival attaque ta grow house — défends-la en 90s (+10 réputation) ou perds 30% de tes produits.
@@ -117,7 +118,7 @@ Histoire (10 contrats) • Free Roam • Guerre des gangs (capture de territoire
 - Brouillard de distance réglé par preset, ombres désactivables, audio synthétisé WebAudio (zéro asset à charger).
 - **Sauvegarde automatique** (localStorage) : à chaque contrat réussi, toutes les 2 minutes, et quand l'app passe en arrière-plan.
 - **Nouvelle partie propre** : « Nouvelle partie » réinitialise tout (argent, armes, business, cartel, abonnés, territoires).
-- Testé par un harnais Node de 26 scénarios joués réellement (`node test/harness.js`).
+- Testé par un harnais Node de 27 scénarios joués réellement (`node test/harness.js`).
 
 ## 🧪 Tests
 
