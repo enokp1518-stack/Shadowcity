@@ -6,12 +6,14 @@
   C.WEAPONS = {
     fists: { name: 'Poings', type: 'melee', dmg: 12, rate: 0.45, range: 1.9, price: 0, desc: 'Vos poings. Gratuits mais courageux.' },
     bat: { name: 'Batte cloutée', type: 'melee', dmg: 30, rate: 0.6, range: 2.4, price: 800, desc: 'Classique des rues.' },
+    katana: { name: 'Katana Néon', type: 'melee', dmg: 55, rate: 0.5, range: 2.8, price: 12000, desc: 'Lame tranchante, élégance mortelle.' },
     pistol: { name: 'P-9', type: 'gun', dmg: 22, rate: 0.28, mag: 12, reload: 1.1, range: 65, spread: 0.014, price: 1500, ammoPack: 60, ammoPrice: 75, desc: 'Fiable, discret, efficace.' },
     smg: { name: 'Spectre SMG', type: 'gun', dmg: 14, rate: 0.09, mag: 32, reload: 1.6, range: 55, spread: 0.032, price: 6500, ammoPack: 150, ammoPrice: 120, desc: 'Cadence infernale.' },
     shotgun: { name: 'Brise-Nez', type: 'gun', dmg: 11, pellets: 8, rate: 0.85, mag: 6, reload: 2, range: 24, spread: 0.07, price: 9500, ammoPack: 40, ammoPrice: 100, desc: 'Courte portée, gros dégâts.' },
     rifle: { name: 'AK-Neon', type: 'gun', dmg: 26, rate: 0.13, mag: 30, reload: 1.9, range: 85, spread: 0.02, price: 18000, ammoPack: 120, ammoPrice: 150, desc: 'Le fusil d\'assaut du quartier.' },
     sniper: { name: 'Longvue', type: 'gun', dmg: 95, rate: 1.4, mag: 5, reload: 2.4, range: 220, spread: 0.001, price: 35000, ammoPack: 20, ammoPrice: 120, scope: true, desc: 'Un tir, un souvenir.' },
     rpg: { name: 'Guerrier RPG', type: 'launcher', dmg: 150, rate: 1.9, mag: 1, reload: 2.4, range: 130, price: 60000, ammoPack: 6, ammoPrice: 500, rocket: true, desc: 'Démolition contrôlée. Enfin, presque.' },
+    gl6: { name: 'Lance-Grenades GL-6', type: 'launcher', dmg: 90, rate: 1.4, mag: 4, reload: 2.6, range: 90, price: 40000, ammoPack: 8, ammoPrice: 300, rocket: true, desc: 'Explosions en rafale, à couvrir.' },
     reaper: { name: '★ Faucheuse Écarlate', type: 'gun', dmg: 32, pellets: 6, rate: 0.5, mag: 10, reload: 1.8, range: 30, spread: 0.05, price: 0, ammoPack: 40, ammoPrice: 200, exclusive: true, desc: 'Trophée des gangs. Fauche tout à courte portée.', unlock: 'Capturez les 5 territoires' },
     railx: { name: '★ Rail-X', type: 'gun', dmg: 150, rate: 1.2, mag: 4, reload: 2.2, range: 260, spread: 0, price: 120000, ammoPack: 12, ammoPrice: 250, exclusive: true, desc: 'Canon électromagnétique. Transperce tout.', unlock: 'Niveau 10' },
     goldenak: { name: '★ AK Dorée', type: 'gun', dmg: 42, rate: 0.1, mag: 45, reload: 1.8, range: 95, spread: 0.016, price: 0, ammoPack: 150, ammoPrice: 200, exclusive: true, desc: 'L\'arme des stars de YouTube.', unlock: '1M d\'abonnés' },
@@ -102,8 +104,9 @@
     }
 
     const pellets = w.pellets || 1;
+    const eyeBonus = G.eco.equipped.includes('eye') ? 0.7 : 1;
     for (let k = 0; k < pellets; k++) {
-      const d = spreadDir(dir, (p.aiming ? 0.4 : 1) * (w.spread || 0.01));
+      const d = spreadDir(dir, (p.aiming ? 0.4 : 1) * (w.spread || 0.01) * eyeBonus);
       C.hitscan(origin, d, w.range, w.dmg * G.eco.bonuses().dmg, p.pos);
     }
     G.cam.shake = Math.min(0.3, G.cam.shake + 0.05);

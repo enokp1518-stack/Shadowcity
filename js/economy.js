@@ -17,6 +17,8 @@
     falcon: { name: '🦅 Faucon Radar', price: 15000, desc: 'Repère les ennemis et la police sur la minimap.', bonus: 'radar ennemis' },
     panther: { name: '🐆 Panthère Noire', price: 40000, desc: 'Attaque vos ennemis proches (15 dégâts).', bonus: 'attaque (15 dmg)' },
     dragon: { name: '🐉 Bébé Dragon', price: 120000, desc: 'Crache des boules de feu (30 dmg) toutes les 4s.', bonus: 'boule de feu (30 dmg)' },
+    wolf: { name: '🐺 Loup Alpha', price: 60000, desc: 'Déchire vos ennemis proches (25 dmg).', bonus: 'attaque (25 dmg)' },
+    owl: { name: '🦉 Chouette Sage', price: 30000, desc: "+20% d'XP sur tout ce que tu fais.", bonus: '+20% XP' },
     robotcat: { name: '🤖 Chat-Robot', price: 0, desc: 'Cadeau des 100K abonnés. +10% sur tous les revenus.', bonus: '+10% revenus', unlock: '100K abonnés' }
   };
 
@@ -26,7 +28,9 @@
     phoenix: { name: 'Plume du Phénix', price: 35000, desc: 'Régénère 1,5 PV/s.', regen: 1.5 },
     midas: { name: 'Pièce de Midas', price: 50000, desc: '+20% sur tous les revenus.', money: 0.2 },
     ghost: { name: 'Éclat Fantôme', price: 30000, desc: 'La police vous remarque 30% moins.', stealth: 0.3 },
-    void: { name: 'Pierre du Vide', price: 90000, desc: '+25% dégâts, mais -10 PV max.', dmg: 0.25, hpPenalty: 10 }
+    void: { name: 'Pierre du Vide', price: 90000, desc: '+25% dégâts.', dmg: 0.25 },
+    eye: { name: 'Œil du Faucon', price: 45000, desc: 'Précision +30% (dispersion réduite).' },
+    titan: { name: 'Cœur de Titan', price: 70000, desc: '+30 PV maximum.' }
   };
 
   E.petsOwned = [];
@@ -127,8 +131,8 @@
   E.refreshPet = function () {
     if (E.petObj) { G.scene.remove(E.petObj); E.petObj = null; }
     if (!E.activePet || !E.petsOwned.includes(E.activePet)) { E.activePet = null; return; }
-    const colors = { dog: 0xc49a6c, falcon: 0x8a6f4d, panther: 0x1a1a1e, dragon: 0xc23a2f, robotcat: 0x9ab0c8 };
-    const scales = { dog: 0.55, falcon: 0.4, panther: 0.65, dragon: 0.6, robotcat: 0.5 };
+    const colors = { dog: 0xc49a6c, falcon: 0x8a6f4d, panther: 0x1a1a1e, dragon: 0xc23a2f, robotcat: 0x9ab0c8, wolf: 0x7a8087, owl: 0x8a6f3d };
+    const scales = { dog: 0.55, falcon: 0.4, panther: 0.65, dragon: 0.6, robotcat: 0.5, wolf: 0.7, owl: 0.35 };
     E.petObj = G.makeHumanoid(colors[E.activePet] || 0xffffff, scales[E.activePet] || 0.5);
     G.scene.add(E.petObj);
   };
@@ -140,7 +144,7 @@
     E.artifactsOwned.push(id);
     G.ui.toast('🔮 ' + a.name + ' acquis !', 'money');
     G.sfx.buy();
-    if (id === 'void') { G.player.maxHp = Math.max(50, G.player.maxHp - a.hpPenalty); G.player.hp = Math.min(G.player.hp, G.player.maxHp); }
+    G.recalcMaxHp();
   };
 
   E.toggleArtifact = function (id) {
@@ -150,6 +154,7 @@
       if (E.equipped.length >= 3) { G.ui.toast('Maximum 3 artefacts équipés', 'warn'); G.sfx.deny(); return; }
       E.equipped.push(id);
     }
+    G.recalcMaxHp();
     G.sfx.ui();
   };
 
@@ -203,7 +208,7 @@
       E.petObj.rotation.y = G.player.obj.rotation.y;
 
       E.petAtkCd -= dt;
-      if (E.petAtkCd <= 0 && (E.activePet === 'panther' || E.activePet === 'dragon')) {
+      if (E.petAtkCd <= 0 && (E.activePet === 'panther' || E.activePet === 'dragon' || E.activePet === 'wolf')) {
         for (const n of G.npcs) {
           if (n.dead) continue;
           if (U.d2(n.obj.position.x, n.obj.position.z, t.x, t.z) < 196) {
@@ -211,7 +216,7 @@
             if (E.activePet === 'dragon') {
               G.combat.explode(G.V3(n.obj.position.x, 1, n.obj.position.z), 3, 30, true);
             } else {
-              G.damageNPC(n, 15, false);
+              G.damageNPC(n, E.activePet === 'wolf' ? 25 : 15, false);
               G.sfx.melee();
             }
             break;

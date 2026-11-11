@@ -11,7 +11,8 @@
     taxi: { name: 'Taxi', max: 27, acc: 13, grip: 2.2, hp: 110, price: 6000, color: 0xf5c518 },
     van: { name: 'Fourgon', max: 21, acc: 9, grip: 1.8, hp: 180, price: 9000, color: 0x9aa5b1 },
     truck: { name: 'Camion', max: 18, acc: 7, grip: 1.5, hp: 260, price: 15000, color: 0x5a6472 },
-    police: { name: 'Interceptor', max: 36, acc: 22, grip: 2.7, hp: 140, price: 0, color: 0x2244cc }
+    police: { name: 'Interceptor', max: 36, acc: 22, grip: 2.7, hp: 140, price: 0, color: 0x2244cc },
+    moto: { name: 'Moto Foudre', max: 52, acc: 30, grip: 3.2, hp: 60, price: 35000, color: 0x00e5ff, bike: true }
   };
 
   V.makeCar = function (typeKey, x, z, yaw, color) {
@@ -19,22 +20,41 @@
     const g = new THREE.Group();
     const c = color !== undefined ? color : def.color;
     const bodyMat = new THREE.MeshLambertMaterial({ color: c });
-    const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.65, 4.6), bodyMat);
-    body.position.y = 0.62; body.castShadow = true;
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.55, 2.1), new THREE.MeshLambertMaterial({ color: 0x18202e }));
-    cabin.position.set(0, 1.18, -0.25);
-    const nose = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.3, 0.9), bodyMat);
-    nose.position.set(0, 0.55, 2.5);
-    g.add(body, cabin, nose);
     const wheels = [];
     const wg = new THREE.CylinderGeometry(0.38, 0.38, 0.3, 10);
     const wm = new THREE.MeshLambertMaterial({ color: 0x14161a });
-    for (const [wx, wz] of [[-1.05, 1.5], [1.05, 1.5], [-1.05, -1.5], [1.05, -1.5]]) {
-      const w = new THREE.Mesh(wg, wm);
-      w.rotation.z = Math.PI / 2;
-      w.position.set(wx, 0.38, wz);
-      g.add(w);
-      wheels.push(w);
+    if (def.bike) {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 2.2), bodyMat);
+      body.position.y = 0.8; body.castShadow = true;
+      const tank = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.35, 0.9), bodyMat);
+      tank.position.set(0, 1.05, 0.3);
+      const bar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.08, 0.08), new THREE.MeshLambertMaterial({ color: 0x22262e }));
+      bar.position.set(0, 1.25, 1);
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.8), new THREE.MeshLambertMaterial({ color: 0x14161a }));
+      seat.position.set(0, 1.05, -0.5);
+      g.add(body, tank, bar, seat);
+      for (const wz of [0.95, -0.95]) {
+        const w = new THREE.Mesh(wg, wm);
+        w.rotation.z = Math.PI / 2;
+        w.position.set(0, 0.38, wz);
+        g.add(w);
+        wheels.push(w);
+      }
+    } else {
+      const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 0.65, 4.6), bodyMat);
+      body.position.y = 0.62; body.castShadow = true;
+      const cabin = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.55, 2.1), new THREE.MeshLambertMaterial({ color: 0x18202e }));
+      cabin.position.set(0, 1.18, -0.25);
+      const nose = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.3, 0.9), bodyMat);
+      nose.position.set(0, 0.55, 2.5);
+      g.add(body, cabin, nose);
+      for (const [wx, wz] of [[-1.05, 1.5], [1.05, 1.5], [-1.05, -1.5], [1.05, -1.5]]) {
+        const w = new THREE.Mesh(wg, wm);
+        w.rotation.z = Math.PI / 2;
+        w.position.set(wx, 0.38, wz);
+        g.add(w);
+        wheels.push(w);
+      }
     }
     const hl = new THREE.Mesh(new THREE.BoxGeometry(1.7, 0.15, 0.1), new THREE.MeshBasicMaterial({ color: 0xfff2b0 }));
     hl.position.set(0, 0.62, 2.32);
@@ -45,7 +65,7 @@
     g.rotation.y = yaw || 0;
     G.scene.add(g);
     const car = {
-      obj: g, type: typeKey, def, hp: def.hp, maxHp: def.hp, speed: 0, yaw: yaw || 0,
+      obj: g, type: typeKey, def, hp: def.hp, maxHp: def.hp, speed: 0, yaw: yaw || 0, rad: def.bike ? 0.9 : 1.7,
       driver: null, wheels, bodyMat, wrecked: false, colorHex: c,
       ai: null, race: null, burnT: 0
     };
@@ -56,7 +76,7 @@
   V.spawnParked = function (n) {
     for (let k = 0; k < n; k++) {
       const pt = G.world.randRoadPoint();
-      const type = U.pick(['sedan', 'compact', 'sedan', 'taxi', 'van', 'muscle', 'truck', 'sport']);
+      const type = U.pick(['sedan', 'compact', 'sedan', 'taxi', 'van', 'muscle', 'truck', 'sport', 'moto']);
       const col = U.pick([0x8899aa, 0xb5443c, 0x2d6a8f, 0x3c7a44, 0xd9a012, 0x777777, 0x25282e, 0xae3ec9]);
       V.makeCar(type, pt.x, pt.z, U.rand(0, Math.PI * 2), col);
     }
@@ -126,21 +146,25 @@
     if (I.keys['KeyA'] || I.keys['ArrowLeft']) steer -= 1;
     if (I.keys['KeyD'] || I.keys['ArrowRight']) steer += 1;
     const brake = I.keys['Space'] || I.pressed.brake;
+    const wet = G.world.rain && G.world.rain.active;
+    const maxSp = wet ? car.def.max * 0.85 : car.def.max;
+    const gripBase = wet ? car.def.grip * 0.65 : car.def.grip;
 
     if (brake) car.speed *= 1 - 2.2 * dt;
     car.speed += throttle * car.def.acc * dt;
     car.speed *= 1 - 0.35 * dt;
-    car.speed = U.clamp(car.speed, -car.def.max * 0.4, car.def.max);
+    car.speed = U.clamp(car.speed, -maxSp * 0.4, maxSp);
 
     if (Math.abs(car.speed) > 0.4) {
-      const grip = brake ? car.def.grip * 1.6 : car.def.grip;
+      const grip = brake ? gripBase * 1.6 : gripBase;
       car.yaw -= steer * grip * dt * Math.sign(car.speed) * Math.min(1, Math.abs(car.speed) / 10);
+      if (wet && Math.abs(car.speed) > 14 && Math.random() < dt * 1.5) car.yaw += U.rand(-0.08, 0.08);
     }
 
     const fx = Math.sin(car.yaw), fz = Math.cos(car.yaw);
     let nx = car.obj.position.x + fx * car.speed * dt;
     let nz = car.obj.position.z + fz * car.speed * dt;
-    const [cx, cz] = G.world.collideCircle(nx, nz, 1.7);
+    const [cx, cz] = G.world.collideCircle(nx, nz, car.rad || 1.7);
     if (cx !== nx || cz !== nz) {
       const impact = Math.abs(car.speed);
       if (impact > 9) {
@@ -153,7 +177,7 @@
     car.obj.position.x = cx; car.obj.position.z = cz;
     car.obj.rotation.y = car.yaw;
 
-    for (let w = 0; w < 4; w++) {
+    for (let w = 0; w < car.wheels.length; w++) {
       car.wheels[w].rotation.x += car.speed * dt * 2.4;
       if (w < 2) car.wheels[w].rotation.y = -steer * 0.4;
     }
@@ -250,6 +274,19 @@
     }
   };
 
+  V._hl = null; V._hlCar = null;
+  function ensureHeadlights(car) {
+    if (V._hlCar === car) return;
+    if (V._hl) { V._hl.parent.remove(V._hl); V._hl.target.parent.remove(V._hl.target); V._hl = null; V._hlCar = null; }
+    if (!car || car.wrecked) return;
+    const sp = new THREE.SpotLight(0xfff2cc, 0, 60, 0.5, 0.5, 1.2);
+    sp.position.set(0, 1, 2);
+    sp.target.position.set(0, 0, 24);
+    car.obj.add(sp);
+    car.obj.add(sp.target);
+    V._hl = sp; V._hlCar = car;
+  }
+
   V.update = function (dt) {
     for (let i = G.cars.length - 1; i >= 0; i--) {
       const car = G.cars[i];
@@ -261,6 +298,8 @@
       if (car.driver === 'player') V.updatePlayerCar(car, dt);
       else if (car.driver === 'ai') V.updateTraffic(car, dt);
     }
+    ensureHeadlights(G.player.inCar && !G.player.inCar.wrecked ? G.player.inCar : null);
+    if (V._hl) V._hl.intensity = G.world.nightFactor() * 2.5;
     let traffic = 0;
     for (const c of G.cars) if (c.driver === 'ai') traffic++;
     if (traffic < 12 && Math.random() < 0.05) V.spawnTraffic(1);

@@ -33,6 +33,8 @@
   C.laundered = 0;
   C.customers = [];
   C.plantGroups = {};
+  C.raid = null;
+  C.raidT = 480;
 
   for (const id in C.SEEDS) C.products[id] = { qty: 0, quality: 1 };
   for (const id in C.RECIPES) C.products[id] = { qty: 0, quality: 1 };
@@ -377,6 +379,31 @@
       }
     }
 
+    const growOwned = C.PROPERTIES.some(p => p.type === 'grow' && C.props[p.id].owned);
+    if (!C.raid && growOwned) {
+      C.raidT -= dt;
+      if (C.raidT <= 0) C.startRivalRaid();
+    }
+    if (C.raid) {
+      C.raid.t -= dt;
+      const alive = C.raid.npcs.filter(n => !n.dead);
+      if (alive.length === 0) {
+        C.rep += 10;
+        G.ui.toast('⚔️ Raid rival repoussé ! +10 réputation cartel', 'money');
+        G.sfx.levelup();
+        C.raid = null; C.raidT = 480;
+      } else if (C.raid.t <= 0) {
+        let lost = 0;
+        for (const id in C.products) { const l = Math.floor(C.products[id].qty * 0.3); C.products[id].qty -= l; lost += l; }
+        G.ui.toast('💀 Raid rival réussi : -30% de tes produits (' + lost + ' unités saisis)', 'warn');
+        G.sfx.alarm();
+        C.raid = null; C.raidT = 480;
+      } else if (C.raid.t < 30 && !C.raid.warned) {
+        C.raid.warned = true;
+        G.ui.toast('⏳ Plus que 30s pour défendre ton grow house !', 'warn');
+      }
+    }
+
     if (C.heat > 85 && Math.random() < dt / 60) {
       const mult = C.props.stash.owned ? 0.5 : 1;
       let lost = 0;
@@ -404,9 +431,27 @@
     }
   };
 
+  C.startRivalRaid = function () {
+    const grow = C.PROPERTIES.find(p => p.type === 'grow' && C.props[p.id].owned);
+    if (!grow) return;
+    const n = 3 + Math.floor(G.player.level / 3);
+    const npcs = [];
+    for (let k = 0; k < n; k++) {
+      const g = G.spawnGang('industrial', grow.x + U.rand(-8, 8), grow.z + U.rand(-8, 8), true);
+      g.aggro = true;
+      g.obj.userData.rival = true;
+      npcs.push(g);
+    }
+    C.raid = { npcs, t: 90, x: grow.x, z: grow.z };
+    G.ui.toast('🚨 RAID RIVAL : ta grow house est attaquée ! Défends-la (90s) !', 'warn');
+    G.sfx.alarm();
+    if (G.yt.recording) G.yt.addEvent(150, 'Raid rival en DIRECT !');
+  };
+
   C.reset = function () {
     C.dirty = 0; C.heat = 0; C.rep = 0; C.reagent = 0;
     C.dealers = []; C.contract = null; C.convoy = null; C.laundered = 0;
+    C.raid = null; C.raidT = 480;
     for (const id in C.products) { C.products[id].qty = 0; C.products[id].quality = 1; }
     for (const pid in C.props) { C.props[pid].owned = false; C.props[pid].pots = []; C.props[pid].batch = null; }
     for (const key in C.plantGroups) {
@@ -444,6 +489,7 @@
   C.ui = function () {
     const p = G.player;
     let html = `<div class="secTitle">💰 Propre : ${U.fmt(p.money)} • 🩸 Sale : ${U.fmt(C.dirty)} • 🔥 Heat : ${Math.floor(C.heat)}% • ⭐ Rép. : ${C.rep}</div>`;
+    if (C.raid) html += `<div class="row"><div class="info"><div class="name">🚨 RAID RIVAL EN COURS</div><div class="desc">Défends ta grow house ! Temps restant : ${Math.ceil(C.raid.t)}s — ennemis : ${C.raid.npcs.filter(n => !n.dead).length}</div></div></div>`;
 
     html += '<div class="secTitle">Propriétés</div>';
     for (const pr of C.PROPERTIES) {

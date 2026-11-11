@@ -39,9 +39,61 @@
   const TABS = [
     ['missions', '📋 Contrats'], ['map', '🗺️ Carte'], ['guns', '🔫 Armurerie'],
     ['pets', '🐾 Animaux'], ['arts', '🔮 Artefacts'], ['biz', '🏢 Business'], ['cartel', '📦 Cartel'],
-    ['yt', '📺 YouTube'], ['war', '⚔️ Gangs'], ['race', '🏁 Courses'],
+    ['yt', '📺 YouTube'], ['war', '⚔️ Gangs'], ['race', '🏁 Courses'], ['casino', '🎰 Casino'],
     ['settings', '⚙️ Réglages']
   ];
+
+  const ADS = [
+    { e: '🌃', t: 'Shadow City: Origins', d: 'Le prequel arrive bientôt...' },
+    { e: '🚗', t: 'Turbo Garage', d: 'Tuning et nitro pour ta caisse !' },
+    { e: '🍔', t: 'Burger Néon', d: 'Le nouveau Double Void Burger.' },
+    { e: '💎', t: 'Gem Rush', d: 'Le jeu de puzzle n°1 de la ville !' },
+    { e: '🛡️', t: 'ShadowGuard', d: "Assurance : couvre tes dégâts de voiture." }
+  ];
+
+  UI.showAd = function () {
+    if (G.settings.removeAds || G.ads.showing) return;
+    G.ads.showing = true;
+    G.ads.t = 0;
+    G.ads.skipT = 5;
+    G.state.paused = true;
+    const ad = U.pick(ADS);
+    $('adContent').innerHTML = `<div class="adEmoji">${ad.e}</div><div class="adTitle">${ad.t}</div><div class="adText">${ad.d}</div>`;
+    const skip = $('adSkip');
+    skip.disabled = true;
+    skip.textContent = 'Passer dans 5s...';
+    $('adOverlay').classList.remove('hidden');
+    G.sfx.ui();
+  };
+
+  UI.closeAd = function () {
+    if (!G.ads.showing) return;
+    G.ads.showing = false;
+    G.ads.t = 0;
+    $('adOverlay').classList.add('hidden');
+    if ($('phone').classList.contains('hidden') && $('pause').classList.contains('hidden')) G.state.paused = false;
+    G.sfx.ui();
+  };
+
+  UI.updateAds = function (dt) {
+    if (!G.ads.showing) return;
+    G.ads.skipT -= dt;
+    const skip = $('adSkip');
+    if (G.ads.skipT > 0) skip.textContent = 'Passer dans ' + Math.ceil(G.ads.skipT) + 's...';
+    else if (skip.disabled) { skip.disabled = false; skip.textContent = 'Passer la pub ⏭'; }
+  };
+
+  $('adSkip').addEventListener('click', () => UI.closeAd());
+  $('adRemove').addEventListener('click', () => { $('payOverlay').classList.remove('hidden'); G.sfx.ui(); });
+  $('payCancel').addEventListener('click', () => { $('payOverlay').classList.add('hidden'); G.sfx.ui(); });
+  $('payConfirm').addEventListener('click', () => {
+    G.settings.removeAds = true;
+    G.save(true);
+    $('payOverlay').classList.add('hidden');
+    UI.closeAd();
+    G.ui.toast('✨ Pubs supprimées ! Merci pour ton soutien 💛', 'money');
+    G.sfx.levelup();
+  });
 
   UI.togglePhone = function () {
     if (G.state.screen !== 'play') return;
@@ -91,7 +143,13 @@
       html += row('🧪 Medkit (' + p.medkits + ')', 'Restaure 50 PV immédiatement — 150$', 'Acheter', 'medkit');
       html += row('🎥 Caméra', G.yt.recording ? 'Enregistrement en cours... (' + Math.floor(G.yt.sessionT) + 's, ' + G.yt.points + ' pts)' : 'Filme tes exploits et publie pour gagner des abonnés', G.yt.recording ? 'Stop & publier' : 'Démarrer REC', 'record', { cls: G.yt.recording ? 'red' : '' });
       html += `<div class="secTitle">Statistiques</div>`;
-      html += `<div class="row"><div class="info"><div class="desc">Éliminations : ${G.stats.kills} • Headshots : ${G.stats.headshots} • Courses gagnées : ${G.stats.racesWon}<br>Territoires : ${G.stats.captures}/5 • Vagues : ${G.stats.waves} • Boss : ${G.stats.bosses} • Gagné : ${U.fmt(G.stats.earned)}</div></div></div>`;
+      const inTaxi = p.inCar && p.inCar.type === 'taxi';
+      html += row('🚚 Mission taxi', inTaxi ? 'Démarre une course : récupère un client et dépose-le' : "Nécessite d'être au volant d'un taxi", 'Démarrer', 'taxi', { dis: !inTaxi, cls: inTaxi ? 'gold' : '' });
+      html += `<div class="secTitle">Succès (${G.state.achievements.length}/${G.ACHIEVEMENTS.length})</div>`;
+      for (const a of G.ACHIEVEMENTS) {
+        const done = G.state.achievements.includes(a.id);
+        html += row((done ? '🏆 ' : '🔒 ') + a.name, a.desc + ' — Récompense : ' + U.fmt(a.reward), done ? '✓' : 'À faire', 'noop', { dis: true, cls: done ? 'gold' : '' });
+      }
       c.innerHTML = html;
     }
 
@@ -204,6 +262,16 @@
       c.innerHTML = html;
     }
 
+    if (curTab === 'casino') {
+      let html = money + '<div class="secTitle">🎰 Casino Lucky Main — Machines à sous</div>';
+      html += `<div id="slotRow" class="slotRow"><span>🍒</span><span>🍋</span><span>🔔</span></div>`;
+      html += row('Mise 100$', 'Petite mise, gros rêves', 'Jouer', 'slot:100');
+      html += row('Mise 500$', 'Pour les joueurs sérieux', 'Jouer', 'slot:500', { cls: 'gold' });
+      html += row('Mise 1000$', 'High roller only', 'Jouer', 'slot:1000', { cls: 'red' });
+      html += `<div class="row"><div class="info"><div class="desc">Gains : 7️⃣×3 ×20 • ⭐×3 ×10 • 🔔×3 ×6 • 🍋×3 ×4 • 🍒×3 ×3 • paire ×1,5</div></div></div>`;
+      c.innerHTML = html;
+    }
+
     if (curTab === 'settings') {
       const s = G.settings;
       let html = '<div class="secTitle">Graphismes</div>';
@@ -212,6 +280,7 @@
       html += '<div class="secTitle">Audio & contrôles</div>';
       html += row('🔊 Son', 'Effets sonores', s.sound ? 'ON' : 'OFF', 'sound', { cls: s.sound ? 'green' : '' });
       html += row('🖱️ Sensibilité', 'Caméra / visée : ' + s.sens.toFixed(1) + 'x', '+ / −', 'sens');
+      html += row('👕 Tenue', 'Change la couleur de ta tenue', 'Changer', 'outfit', { cls: 'gold' });
       html += '<div class="secTitle">Sauvegarde</div>';
       html += row('💾 Sauvegarder', 'Ta progression est stockée sur cet appareil', 'Sauvegarder', 'save', { cls: 'green' });
       html += row('🗑️ Nouvelle partie', 'Efface la sauvegarde et recommence à zéro', 'Tout effacer', 'wipe', { cls: 'red' });
@@ -267,6 +336,35 @@
           G.ui.toast('💵 Police soudoyée — recherche annulée', 'money');
         }
         break;
+      case 'taxi': G.closePhoneAfter(() => G.modes.startTaxi()); break;
+      case 'outfit': {
+        const OUTFITS = [0x2f9bff, 0xff2d95, 0x7cff4d, 0xffd23e, 0xae3ec9, 0xff5a3c, 0x111418];
+        const cur = OUTFITS.indexOf(G.settings.outfit);
+        G.settings.outfit = OUTFITS[(cur + 1) % OUTFITS.length];
+        G.player.obj.userData.mat.color.setHex(G.settings.outfit);
+        G.save(true);
+        G.ui.toast('👕 Nouvelle tenue !');
+        break;
+      }
+      case 'slot': {
+        const bet = parseInt(arg);
+        if (!G.eco.spend(bet)) break;
+        const SYM = ['🍒', '🍋', '🔔', '⭐', '7️⃣'];
+        const r = [U.pick(SYM), U.pick(SYM), U.pick(SYM)];
+        let mult = 0;
+        if (r[0] === r[1] && r[1] === r[2]) mult = r[2] === '7️⃣' ? 20 : r[2] === '⭐' ? 10 : r[2] === '🔔' ? 6 : r[2] === '🍋' ? 4 : 3;
+        else if (r[0] === r[1] || r[1] === r[2] || r[0] === r[2]) mult = 1.5;
+        if (mult > 0) {
+          const gain = Math.floor(bet * mult);
+          G.player.money += gain;
+          G.ui.toast(r.join(' ') + ' → GAIN +' + U.fmt(gain) + ' !', 'money');
+          G.sfx.levelup();
+        } else {
+          G.ui.toast(r.join(' ') + ' → Perdu... Retente ta chance !', 'warn');
+          G.sfx.deny();
+        }
+        break;
+      }
       case 'save': G.save(); break;
       case 'wipe':
         if (confirm('Effacer définitivement la sauvegarde ?')) {
@@ -290,6 +388,8 @@
     }
     UI.refreshPhone();
   }
+
+  G.ui.action = phoneAction;
 
   G.closePhoneAfter = function (fn) {
     UI.closePhone();

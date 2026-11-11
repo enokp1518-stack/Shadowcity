@@ -320,6 +320,50 @@
     }
   };
 
+  M.taxi = { active: false };
+  M.startTaxi = function () {
+    const p = G.player;
+    if (!p.inCar || p.inCar.type !== 'taxi') { G.ui.toast("Prends un taxi d'abord ! (🚖)", 'warn'); return; }
+    const px = G.world.roadCoord(U.randi(0, G.world.GRID)), pz = G.world.roadCoord(U.randi(0, G.world.GRID));
+    M.taxi = { active: true, state: 'pickup', px, pz, dx: 0, dz: 0, startDist: 0 };
+    G.ui.toast('🚕 Course taxi : va chercher le client (marqueur jaune)');
+    G.sfx.ui();
+  };
+  M.updateTaxi = function () {
+    const T = M.taxi;
+    if (!T.active) return;
+    const p = G.player;
+    if (!p.inCar || p.inCar.type !== 'taxi') {
+      T.active = false;
+      M.storyMarker = null;
+      G.ui.toast('Course taxi annulée — tu as quitté le taxi', 'warn');
+      return;
+    }
+    if (T.state === 'pickup') {
+      G.ui.setMission('🚕 Taxi — récupérer le client', Math.floor(Math.sqrt(U.d2(p.pos.x, p.pos.z, T.px, T.pz))) + ' m');
+      M.storyMarker = { x: T.px, z: T.pz };
+      if (Math.sqrt(U.d2(p.pos.x, p.pos.z, T.px, T.pz)) < 8) {
+        T.state = 'dropoff'; T.dx = G.world.roadCoord(U.randi(0, G.world.GRID)); T.dz = G.world.roadCoord(U.randi(0, G.world.GRID));
+        T.startDist = Math.sqrt(U.d2(p.pos.x, p.pos.z, T.dx, T.dz));
+        G.ui.toast('🧍 Client à bord ! Direction la destination (marqueur jaune).');
+        G.sfx.ui();
+      }
+    } else {
+      G.ui.setMission('🚕 Taxi — déposer le client', Math.floor(Math.sqrt(U.d2(p.pos.x, p.pos.z, T.dx, T.dz))) + ' m');
+      M.storyMarker = { x: T.dx, z: T.dz };
+      if (Math.sqrt(U.d2(p.pos.x, p.pos.z, T.dx, T.dz)) < 8) {
+        const fare = Math.floor(100 + T.startDist * 0.5);
+        G.eco.earn(fare, true);
+        G.addXP(20);
+        G.ui.toast('🚕 Course terminée ! +' + U.fmt(fare), 'money');
+        G.sfx.cash();
+        if (G.yt.recording) G.yt.addEvent(40, 'Course de taxi réussie !');
+        T.active = false;
+        M.storyMarker = null;
+      }
+    }
+  };
+
   M.rift = { active: false };
   M.enterRift = function () {
     if (M.rift.active) return;
@@ -374,6 +418,7 @@
     M.updateWar();
     M.updateSurvival(dt);
     M.updateRace(dt);
+    M.updateTaxi();
     M.enterRift();
     M.updateRift(dt);
     G.yt.update(dt);

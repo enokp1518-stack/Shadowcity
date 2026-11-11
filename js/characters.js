@@ -25,6 +25,7 @@
     g.add(body, head, lArm, rArm, lLeg, rLeg);
     if (scale) g.scale.setScalar(scale);
     g.userData.anim = { lArm, rArm, lLeg, rLeg, head, body };
+    g.userData.mat = mat;
     return g;
   };
 
@@ -164,8 +165,13 @@
     const ang = U.rand(0, Math.PI * 2), r = U.rand(55, 80);
     let x = U.clamp(nearX + Math.cos(ang) * r, G.world.ORIGIN + 8, -G.world.ORIGIN - 8);
     let z = U.clamp(nearZ + Math.sin(ang) * r, G.world.ORIGIN + 8, -G.world.ORIGIN - 8);
-    const n = baseNPC('cop', x, z, GANG_COLORS.COPS);
-    n.hp = n.maxHp = 80; n.speed = 5.5; n.dmg = 8; n.shootCd = 1;
+    const swat = G.player.wanted >= 4;
+    const n = baseNPC('cop', x, z, swat ? 0x1a2a5a : GANG_COLORS.COPS);
+    n.hp = n.maxHp = swat ? 150 : 80;
+    n.speed = swat ? 6.2 : 5.5;
+    n.dmg = swat ? 13 : 8;
+    n.shootCd = 1;
+    if (swat) n.obj.userData.mat.color.setHex(0x1a2a5a);
     return n;
   };
 

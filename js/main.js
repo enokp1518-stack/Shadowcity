@@ -121,7 +121,7 @@
     } else raceRing.visible = false;
   }
 
-  let fpsAcc = 0, fpsN = 0, adaptT = 0, autosaveT = 0;
+  let fpsAcc = 0, fpsN = 0, adaptT = 0, autosaveT = 0, achT = 0;
 
   function adaptiveRes(dt) {
     fpsAcc += dt; fpsN++;
@@ -159,6 +159,13 @@
       adaptiveRes(dt);
       autosaveT += dt;
       if (autosaveT > 120) { autosaveT = 0; G.save(true); }
+      achT += dt;
+      if (achT > 5) { achT = 0; G.checkAchievements(); }
+      if (!G.settings.removeAds) {
+        G.ads.t += dt;
+        if (G.ads.t >= 600) G.ui.showAd();
+      }
+      G.ui.updateAds(dt);
     } else if (G.state.screen === 'play') {
       G.world.updateEnvironment(dt * 0.2);
     }

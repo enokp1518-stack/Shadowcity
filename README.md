@@ -51,7 +51,7 @@ et **5 armes exclusives** :
 
 ## 🐾 Animaux & 🔮 Artefacts
 
-5 animaux avec bonus (chien aimant à billets, faucon radar, panthère combattante, bébé dragon cracheur de feu, chat-robot +10% revenus) et 6 artefacts à équiper (3 max) : dégâts, vitesse, régénération, revenus, discrétion…
+7 animaux avec bonus (chien aimant à billets, faucon radar, panthère combattante, bébé dragon cracheur de feu, **loup alpha** qui déchire les ennemis, **chouette sage** +20% XP, chat-robot +10% revenus) et 8 artefacts à équiper (3 max) : dégâts, vitesse, régénération, revenus, discrétion, **Œil du Faucon** (précision +30%), **Cœur de Titan** (+30 PV max)...
 
 ## 📦 Empire « Schedule » (Cartel)
 
@@ -65,6 +65,7 @@ Inspiré de Schedule 1 & 2, un cycle complet de narco-empire (fictif et stylisé
 - **Dealers** : recrute un dealer par quartier (vente auto), fournis-leur du stock.
 - **Contrats** : commandes groupées chronométrées → bonus + réputation (débloque variétés et recettes).
 - **Convois** : envoie 15 unités en ville pour +50% de valeur… avec risque de contrôle policier.
+- **Raids rivaux** : toutes les ~8 minutes, un cartel rival attaque ta grow house — défends-la en 90s (+10 réputation) ou perds 30% de tes produits.
 
 ## 💼 Business & 📺 Carrière de YouTubeur
 
@@ -75,17 +76,36 @@ Inspiré de Schedule 1 & 2, un cycle complet de narco-empire (fictif et stylisé
 
 Histoire (10 contrats) • Free Roam • Guerre des gangs (capture de territoires) • Survie par vagues à l'Arène des Bêtes • 3 Courses de rue • Boss du Rift.
 
+## 🚚 Métiers & véhicules
+
+- **Missions taxi** : au volant d'un taxi (onglet Contrats du téléphone), récupère des clients et dépose-les — tarif = 100$ + 0,5$/m.
+- **Moto Foudre** : la plus rapide du jeu (52 max, accélération 30) — attention, prises dans les virages.
+- Arsenal de 15 armes dont le **Katana Néon** et le **lance-grenades GL-6**.
+- **SWAT** déployé dès 4 étoiles de recherche, arrestations si tu restes au sol face à la police.
+
+## 🎰 Casino & météo
+
+- **Casino** (onglet dédié) : machines à sous — mises 100/500/1000$, gains jusqu'à ×20.
+- **Pluie dynamique** : le ciel s'assombrit, le brouillard se resserre et la route glisse (grippage réduit, dérapages).
+- **Tenues** : change la couleur de ta tenue dans Réglages.
+- **12 succès** avec récompenses en argent (liste dans l'onglet Contrats).
+
+## 💰 Publicité & Premium
+
+- Une **publicité toutes les 10 minutes** de jeu (passable après 5 secondes).
+- **Shadow City Premium — 5,00 €** (paiement unique, démo simulée) : supprime définitivement toutes les pubs.
+
 ## ⚙️ Optimisation mobile
 
 - Résolution adaptative automatique (si les chutes de FPS, la résolution baisse) + 3 presets qualité jusqu'au rendu 4K (DPR ×3).
 - Brouillard de distance réglé par preset, ombres désactivables, audio synthétisé WebAudio (zéro asset à charger).
 - **Sauvegarde automatique** (localStorage) : à chaque contrat réussi, toutes les 2 minutes, et quand l'app passe en arrière-plan.
 - **Nouvelle partie propre** : « Nouvelle partie » réinitialise tout (argent, armes, business, cartel, abonnés, territoires).
-- Testé par un harnais Node de 13 scénarios joués réellement (`node test/harness.js`).
+- Testé par un harnais Node de 17 scénarios joués réellement (`node test/harness.js`).
 
 ## 🧪 Tests
 
 ```bash
 node test/harness.js
 ```
-Harnais Node qui simule DOM + entrées et joue réellement au jeu : marche, tir, conduite, guerre des gangs, survie, course, YouTube, économie, boss, sauvegarde.
+Harnais Node qui simule DOM + entrées et joue réellement au jeu : marche, tir, conduite, guerre des gangs, survie, course, YouTube, économie, boss, sauvegarde., arrestations, casino, taxi, moto, pluie, raids rivaux, pubs et succès.

@@ -344,6 +344,24 @@
     }
   }
 
+  W.rain = { active: false, next: U.rand(90, 240) };
+  W.fogFar = 420;
+  let rainPts = null, rainGeo = null;
+
+  function buildRain() {
+    const N = 900;
+    rainGeo = new THREE.BufferGeometry();
+    const pos = new Float32Array(N * 3);
+    for (let i = 0; i < N; i++) {
+      pos[i * 3] = U.rand(-60, 60); pos[i * 3 + 1] = U.rand(0, 40); pos[i * 3 + 2] = U.rand(-60, 60);
+    }
+    rainGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    rainPts = new THREE.Points(rainGeo, new THREE.PointsMaterial({ color: 0x9fc8ff, size: 0.14, transparent: true, opacity: 0, depthWrite: false }));
+    rainPts.visible = false;
+    rainPts.frustumCulled = false;
+    G.scene.add(rainPts);
+  }
+
   function buildStars() {
     const geo = new THREE.BufferGeometry();
     const pos = [];
@@ -364,6 +382,7 @@
     for (let i = 0; i < W.GRID; i++) for (let j = 0; j < W.GRID; j++) buildBlock(i, j);
     buildStreetlights();
     buildStars();
+    buildRain();
 
     W.sunDisc = new THREE.Mesh(new THREE.SphereGeometry(22, 16, 12),
       new THREE.MeshBasicMaterial({ color: 0xffdf8a, fog: false }));
@@ -415,10 +434,9 @@
 
   W.applyFogDistance = function () {
     const q = G.settings.quality;
-    if (q === 'perf') fog.far = 260;
-    else if (q === 'hd') fog.far = 420;
-    else fog.far = 620;
-    fog.near = fog.far * 0.28;
+    if (q === 'perf') W.fogFar = 260;
+    else if (q === 'hd') W.fogFar = 420;
+    else W.fogFar = 620;
   };
 
   const daySky = new THREE.Color(0x7ec0ee), duskSky = new THREE.Color(0xff8a5a), nightSky = new THREE.Color(0x070b18);
@@ -437,8 +455,34 @@
     const dayF = U.clamp(elev * 2.2, 0, 1);
     tmpC.copy(nightSky).lerp(daySky, dayF);
     if (elev < 0.25 && elev > -0.1) tmpC2.copy(duskSky), tmpC.lerp(tmpC2, U.clamp((0.25 - Math.abs(elev - 0.08)) * 2, 0, 1));
+    const R = W.rain;
+    R.next -= dt;
+    if (R.next <= 0) {
+      R.active = !R.active;
+      R.next = R.active ? U.rand(60, 150) : U.rand(120, 300);
+      if (G.state.screen === 'play') G.ui.toast(R.active ? '🌧️ La pluie s\'abat sur Shadow City...' : '☀️ Le ciel se dégage.');
+    }
+    if (R.active) tmpC.multiplyScalar(0.55);
     skyColor.copy(tmpC);
     fog.color.copy(tmpC);
+    fog.far = W.fogFar * (R.active ? 0.5 : 1);
+    fog.near = fog.far * 0.28;
+
+    if (rainPts) {
+      rainPts.visible = R.active;
+      const targetOp = R.active ? 0.55 : 0;
+      rainPts.material.opacity += (targetOp - rainPts.material.opacity) * Math.min(1, dt * 2);
+      if (R.active) {
+        const pp = G.player.pos;
+        rainPts.position.set(pp.x, 0, pp.z);
+        const arr = rainGeo.attributes.position.array;
+        for (let i = 0; i < arr.length; i += 3) {
+          arr[i + 1] -= 38 * dt;
+          if (arr[i + 1] < 0) { arr[i + 1] = U.rand(30, 40); arr[i] = U.rand(-60, 60); arr[i + 2] = U.rand(-60, 60); }
+        }
+        rainGeo.attributes.position.needsUpdate = true;
+      }
+    }
 
     const glow = nf;
     for (const m of glowMats) {
@@ -454,7 +498,7 @@
       W.moonDisc.visible = elev < 0.12;
     }
     if (W.clouds) {
-      W.cloudMat.opacity = 0.5 - nf * 0.32;
+      W.cloudMat.opacity = (W.rain.active ? 0.85 : 0.5) - nf * 0.32;
       for (const cl of W.clouds) {
         cl.position.x += cl.userData.speed * dt;
         if (cl.position.x > 760) cl.position.x = -760;

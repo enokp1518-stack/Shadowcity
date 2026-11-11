@@ -2,8 +2,8 @@
 window.G = {
   version: '1.0.0',
   scene: null, camera: null, renderer: null, clock: null,
-  settings: { quality: 'hd', shadows: true, sound: true, sens: 1.0 },
-  state: { screen: 'menu', mode: 'story', time: 9.0, paused: false, fps: 60, resScale: 1, lastCrime: -99, wasted: false, kills: 0 },
+  settings: { quality: 'hd', shadows: true, sound: true, sens: 1.0, removeAds: false, outfit: 0x2f9bff },
+  state: { screen: 'menu', mode: 'story', time: 9.0, paused: false, fps: 60, resScale: 1, lastCrime: -99, wasted: false, kills: 0, achievements: [], sirenOn: false },
   stats: { kills: 0, headshots: 0, carsEntered: 0, racesWon: 0, captures: 0, waves: 0, bosses: 0, earned: 0, stunts: 0, distance: 0 },
   player: null,
   npcs: [], cars: [], pickups: [], projectiles: [], effects: [],
@@ -229,22 +229,71 @@ G.newGame = function () {
   G.modes.survival = { active: false, wave: 0, alive: 0, breakT: 0 };
   G.modes.race = { active: false };
   G.modes.rift = { active: false };
+  G.modes.taxi = { active: false };
+  G.modes.storyMarker = null;
   G.modes.missions.forEach(m => m.stages.forEach(s => { s._entered = false; }));
   for (let i = G.npcs.length - 1; i >= 0; i--) {
     if (G.npcs[i].warTag || G.npcs[i].survival) { G.scene.remove(G.npcs[i].obj); G.npcs.splice(i, 1); }
   }
   G.state.lastCrime = -99;
   G.state.kills = 0;
+  G.ads.t = 0;
+  G.sfx.siren(false);
+  G.state.sirenOn = false;
+};
+
+G.recalcMaxHp = function () {
+  const p = G.player; if (!p) return;
+  let hp = 100 + (p.level - 1) * 10;
+  if (G.eco) {
+    if (G.eco.equipped.includes('titan')) hp += 30;
+    if (G.eco.equipped.includes('void')) hp -= 10;
+  }
+  p.maxHp = Math.max(50, hp);
+  p.hp = Math.min(p.hp, p.maxHp);
 };
 
 G.addXP = function (n) {
   const p = G.player; if (!p) return;
+  if (G.eco && G.eco.activePet === 'owl') n = Math.floor(n * 1.2);
   p.xp += n;
   const lvl = Math.floor(Math.sqrt(p.xp / 80)) + 1;
   if (lvl > p.level) {
-    p.level = lvl; p.maxHp = 100 + (lvl - 1) * 10; p.hp = p.maxHp;
+    p.level = lvl;
+    G.recalcMaxHp();
+    p.hp = p.maxHp;
     G.ui.toast('⭐ Niveau ' + lvl + ' atteint ! PV max +10', 'money');
     G.sfx.levelup();
+  }
+};
+
+G.ads = { t: 0, showing: false };
+
+G.ACHIEVEMENTS = [
+  { id: 'blood', name: 'Premier sang', desc: 'Première élimination', cond: s => s.kills >= 1, reward: 200 },
+  { id: 'hunter', name: 'Chasseur de la ville', desc: '50 éliminations', cond: s => s.kills >= 50, reward: 2000 },
+  { id: 'rich', name: 'Nouveau riche', desc: '100 000$ gagnés au total', cond: s => s.earned >= 100000, reward: 5000 },
+  { id: 'wheels', name: 'As du volant', desc: '50 véhicules volés', cond: s => s.carsEntered >= 50, reward: 3000 },
+  { id: 'racer', name: 'Roi du bitume', desc: '5 courses gagnées', cond: s => s.racesWon >= 5, reward: 5000 },
+  { id: 'warlord', name: 'Seigneur de guerre', desc: '5 territoires capturés', cond: s => s.captures >= 5, reward: 20000 },
+  { id: 'slayer', name: 'Tueur de bêtes', desc: '10 vagues de survie', cond: s => s.waves >= 10, reward: 10000 },
+  { id: 'gods', name: 'Tueur de dieux', desc: 'Vaincre le Golem du Rift', cond: s => s.bosses >= 1, reward: 10000 },
+  { id: 'veteran', name: 'Vétéran', desc: 'Atteindre le niveau 10', cond: () => G.player.level >= 10, reward: 10000 },
+  { id: 'tycoon', name: 'Magnat', desc: 'Posséder les 6 business', cond: () => G.eco.businesses.every(b => b.owned), reward: 25000 },
+  { id: 'cartel', name: 'Baron de la poudre', desc: '100 de réputation cartel', cond: () => G.cartel.rep >= 100, reward: 8000 },
+  { id: 'star', name: 'Star de ShadowTV', desc: '100 000 abonnés', cond: () => G.yt.subs >= 100000, reward: 15000 }
+];
+
+G.checkAchievements = function () {
+  const done = G.state.achievements;
+  for (const a of G.ACHIEVEMENTS) {
+    if (done.includes(a.id)) continue;
+    if (a.cond(G.stats)) {
+      done.push(a.id);
+      G.player.money += a.reward;
+      G.ui.toast('🏆 Succès : ' + a.name + ' (+' + U.fmt(a.reward) + ') — ' + a.desc, 'money');
+      G.sfx.levelup();
+    }
   }
 };
 
@@ -263,6 +312,7 @@ G.saveData = function () {
     missions: G.modes.missionIdx,
     stats: G.stats,
     settings: G.settings,
+    achievements: G.state.achievements,
     time: G.state.time
   };
 };
@@ -293,6 +343,8 @@ G.applySave = function (d) {
   G.modes.missions.forEach(m => m.stages.forEach(s => { s._entered = false; }));
   if (d.stats) Object.assign(G.stats, d.stats);
   if (d.settings) Object.assign(G.settings, d.settings);
+  G.state.achievements = d.achievements || [];
+  if (G.player.obj) G.player.obj.userData.mat.color.setHex(G.settings.outfit);
   G.state.time = d.time || 9;
   G.eco.refreshPet();
   return true;

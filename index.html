@@ -75,6 +75,28 @@
 
 <div id="bigMsg" class="hidden"></div>
 
+<div id="adOverlay" class="hidden">
+  <div id="adBox">
+    <div id="adTag">PUBLICITÉ</div>
+    <div id="adContent"></div>
+    <div id="adBtns">
+      <button id="adSkip" disabled>Passer dans 5s...</button>
+      <button id="adRemove">🚫 Supprimer les pubs — 5,00 €</button>
+    </div>
+  </div>
+</div>
+
+<div id="payOverlay" class="hidden">
+  <div id="payBox">
+    <h3>🚫 Shadow City Premium</h3>
+    <p>Zéro publicité, pour toujours.</p>
+    <div class="payprice">5,00 € — paiement unique</div>
+    <div id="payNote">Démo : aucun paiement réel n'est effectué. Branche ici Stripe / Play Billing pour la production.</div>
+    <button id="payConfirm">Payer 5,00 € (démo)</button>
+    <button id="payCancel">Annuler</button>
+  </div>
+</div>
+
 <script src="js/three.min.js"></script>
 <script src="js/core.js"></script>
 <script src="js/world.js"></script>
