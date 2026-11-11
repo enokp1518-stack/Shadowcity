@@ -38,7 +38,7 @@
   let curTab = 'missions';
   const TABS = [
     ['missions', '📋 Contrats'], ['map', '🗺️ Carte'], ['guns', '🔫 Armurerie'],
-    ['pets', '🐾 Animaux'], ['arts', '🔮 Artefacts'], ['biz', '🏢 Business'], ['cartel', '📦 Cartel'],
+    ['pets', '🐾 Animaux'], ['arts', '🔮 Artefacts'], ['biz', '🏢 Business'], ['jobs', '💼 Jobs'], ['quests', '❓ Quêtes'], ['cartel', '📦 Cartel'],
     ['yt', '📺 YouTube'], ['war', '⚔️ Gangs'], ['race', '🏁 Courses'], ['casino', '🎰 Casino'],
     ['settings', '⚙️ Réglages']
   ];
@@ -214,12 +214,48 @@
       let html = money + '<div class="secTitle">Empire commercial</div>';
       for (const b of G.eco.businesses) {
         if (b.owned) {
-          html += row('🏢 ' + b.name, `Revenu : ${U.fmt(b.income)}/min — En caisse : ${U.fmt(b.stored)}`, 'Encaisser', 'collect:' + b.id, { cls: 'green', dis: b.stored < 1 });
+          const lvl = b.level || 1;
+          const upCost = Math.floor(b.price * 0.6 * lvl);
+          html += row2('🏢 ' + b.name + ' (Niv. ' + lvl + '/3)', `Revenu : ${U.fmt(G.eco.bizIncome(b))}/min — En caisse : ${U.fmt(b.stored)}`,
+            { l: 'Encaisser', a: 'collect:' + b.id, dis: b.stored < 1, cls: 'green' },
+            lvl >= 3 ? null : { l: '🔧 Améliorer ' + U.fmt(upCost), a: 'upgradebiz:' + b.id, cls: 'gold' });
         } else {
           html += row('🏢 ' + b.name, b.desc + ` — Revenu : ${U.fmt(b.income)}/min`, U.fmt(b.price), 'buybiz:' + b.id);
         }
       }
       html += row('💰 Tout encaisser', 'Récupère la caisse de tous tes business', 'Collecter', 'collectall', { cls: 'gold' });
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'jobs') {
+      let html = money + '<div class="secTitle">Petits boulots</div>';
+      for (const id in G.jobs.JOBS) {
+        const j = G.jobs.JOBS[id];
+        const isActive = G.jobs.active && G.jobs.active.type === id;
+        html += row(j.name, j.desc + ' — Paie : ' + U.fmt(j.pay) + ' + bonus de niveau', isActive ? 'En cours' : 'Démarrer', 'job:' + id, { dis: !!G.jobs.active, cls: isActive ? 'green' : 'gold' });
+      }
+      html += '<div class="secTitle">Shifts dans tes business</div>';
+      const owned = G.eco.businesses.filter(b => b.owned);
+      if (owned.length === 0) html += row('💼 Aucun business', 'Achète un business (onglet Business) pour y travailler', '—', 'noop', { dis: true });
+      else for (const b of owned) html += row('💼 ' + b.name, 'Shift de 20s sur place — Paie : ' + U.fmt(Math.floor(G.eco.bizIncome(b) * 1.5)), 'Travailler', 'workshift:' + b.id, { dis: !!G.jobs.active, cls: 'gold' });
+      if (G.jobs.active) html += row('⏹ Job en cours : ' + G.jobs.active.def.name, 'Étape ' + (G.jobs.active.step + 1) + '/' + G.jobs.active.total + (G.jobs.active.stage === 'vehicle' ? ' — va chercher le véhicule' : G.jobs.active.stage === 'shift' ? ' — reste sur place' : ''), 'Annuler', 'canceljob', { cls: 'red' });
+      html += `<div class="row"><div class="info"><div class="desc">Jobs terminés : ${G.jobs.done}</div></div></div>`;
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'quests') {
+      let html = money + '<div class="secTitle">Requêtes des habitants</div>';
+      if (G.quests.active) {
+        const o = G.quests.active;
+        html += row('❓ ' + o.title, o.desc + ' — Récompense : ' + U.fmt(o.reward) + ' + ' + o.xp + ' XP', 'En cours', 'noop', { dis: true, cls: 'green' });
+      } else if (G.quests.offer) {
+        const o = G.quests.offer;
+        html += row('💬 ' + o.title, o.desc + ' — Récompense : ' + U.fmt(o.reward) + ' + ' + o.xp + ' XP — expire dans ' + Math.ceil(o.t) + 's', 'Accepter', 'questaccept', { cls: 'gold' });
+        html += row('🙊 Tu préfères ignorer ?', 'L\'habitant repartira et reviendra plus tard', 'Refuser', 'questdecline', { cls: 'red' });
+      } else {
+        html += row("💬 Personne pour l'instant", 'Promène-toi en ville : un habitant (point violet sur la minimap) aura une requête', '—', 'noop', { dis: true });
+      }
+      html += `<div class="row"><div class="info"><div class="desc">Quêtes réussies : ${G.quests.done}</div></div></div>`;
       c.innerHTML = html;
     }
 
@@ -232,6 +268,7 @@
       let html = money;
       html += `<div class="secTitle">Chaîne "ShadowTV" — ${U.fmtSubs(s)} abonnés • ${U.fmtSubs(G.yt.views)} vues • ${G.yt.videos} vidéos</div>`;
       html += row('🎥 Caméra', G.yt.recording ? `REC... ${Math.floor(G.yt.sessionT)}s — ${G.yt.points} points de contenu` : 'Filme kills, courses, guerres et explosions pour du contenu', G.yt.recording ? 'Stop & publier' : 'Démarrer REC', 'record', { cls: G.yt.recording ? 'red' : '' });
+      html += row('🔴 Live ShadowTV', G.yt.live ? `EN DIRECT — ${Math.floor(G.yt.liveT)}s • ${Math.floor(G.yt.livePts)} pts d'audience • dons en temps réel` : 'Lance un live : dons + abonnés en temps réel, tes exploits boostent l\'audience', G.yt.live ? 'Stop le live' : 'Démarrer le live', 'live', { cls: G.yt.live ? 'red' : 'gold' });
       html += `<div class="secTitle">Paliers</div>`;
       html += row('🤝 Sponsoring', '+50% de revenus', s >= 10000 ? '✓ 10K' : '10K abonnés', 'noop', { dis: true, cls: s >= 10000 ? 'green' : '' });
       html += row('🤖 Chat-Robot', 'Animal offert + +10% revenus', s >= 100000 ? '✓ 100K' : '100K abonnés', 'noop', { dis: true, cls: s >= 100000 ? 'green' : '' });
@@ -281,6 +318,7 @@
       html += row('🔊 Son', 'Effets sonores', s.sound ? 'ON' : 'OFF', 'sound', { cls: s.sound ? 'green' : '' });
       html += row('🖱️ Sensibilité', 'Caméra / visée : ' + s.sens.toFixed(1) + 'x', '+ / −', 'sens');
       html += row('👕 Tenue', 'Change la couleur de ta tenue', 'Changer', 'outfit', { cls: 'gold' });
+      html += row('📻 Radio', 'Shadow FM • Boom Bap 103 • Nuit Étoilée • Voltage Rock — touche M (en voiture)', 'Station suivante', 'radio', { cls: 'gold' });
       html += '<div class="secTitle">Sauvegarde</div>';
       html += row('💾 Sauvegarder', 'Ta progression est stockée sur cet appareil', 'Sauvegarder', 'save', { cls: 'green' });
       html += row('🗑️ Nouvelle partie', 'Efface la sauvegarde et recommence à zéro', 'Tout effacer', 'wipe', { cls: 'red' });
@@ -328,6 +366,14 @@
       case 'buybiz': G.eco.buyBusiness(arg); break;
       case 'collect': G.eco.collect(arg); break;
       case 'collectall': G.eco.collectAll(); break;
+      case 'job': G.closePhoneAfter(() => G.jobs.startJob(arg)); break;
+      case 'canceljob': G.jobs.cancel(); break;
+      case 'workshift': G.closePhoneAfter(() => G.jobs.startShift(arg)); break;
+      case 'questaccept': G.quests.accept(); break;
+      case 'questdecline': G.quests.decline(); break;
+      case 'radio': G.radio.next(); break;
+      case 'upgradebiz': G.eco.upgradeBusiness(arg); break;
+      case 'live': if (G.yt.live) G.yt.stopLive(); else G.closePhoneAfter(() => G.yt.startLive()); break;
       case 'war': G.closePhoneAfter(() => G.modes.startWar(arg)); break;
       case 'race': G.closePhoneAfter(() => G.modes.startRace(parseInt(arg))); break;
       case 'bribe':
@@ -494,6 +540,15 @@
       if (n.type === 'ped' && n.obj.userData.customer) {
         ctx.fillStyle = '#ffd23e';
         ctx.beginPath(); ctx.arc(n.obj.position.x, n.obj.position.z, 7, 0, Math.PI * 2); ctx.fill();
+      }
+      if (n.type === 'ped' && n.obj.userData.questGiver) {
+        ctx.fillStyle = '#c04dff';
+        ctx.beginPath(); ctx.arc(n.obj.position.x, n.obj.position.z, 8, 0, Math.PI * 2); ctx.fill();
+      }
+      if (n.type === 'ped' && n.obj.userData.injured) {
+        ctx.fillStyle = '#ff4d6d';
+        ctx.fillRect(n.obj.position.x - 6, n.obj.position.z - 2, 12, 4);
+        ctx.fillRect(n.obj.position.x - 2, n.obj.position.z - 6, 4, 12);
       }
     }
     ctx.restore();

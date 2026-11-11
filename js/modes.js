@@ -5,6 +5,7 @@
 
   G.yt = {
     recording: false, points: 0, sessionT: 0, subs: 0, views: 0, videos: 0, perks: [],
+    live: false, liveT: 0, livePts: 0,
     toggleRecord() {
       if (G.state.screen !== 'play') return;
       if (!this.recording) {
@@ -15,7 +16,32 @@
     },
     addEvent(pts, label) {
       this.points += pts;
+      if (this.live) this.livePts += pts;
       if (label) G.ui.toast('🎥 +' + pts + ' pts : ' + label);
+    },
+    startLive() {
+      if (G.state.screen !== 'play') return;
+      if (this.recording) { G.ui.toast('Arrête d\'abord l\'enregistrement !', 'warn'); G.sfx.deny(); return; }
+      if (this.live) return;
+      this.live = true; this.liveT = 0; this.livePts = 0;
+      G.ui.toast('🔴 EN DIRECT ! Les actions légendaires rapportent — stoppe le live depuis le téléphone (onglet YouTubeur)');
+      G.sfx.ui();
+    },
+    stopLive() {
+      if (!this.live) return;
+      this.live = false;
+      const subsGain = Math.floor(this.livePts * U.rand(0.5, 1) + this.liveT * U.rand(0.5, 2));
+      const views = Math.floor(this.livePts * 30 + this.liveT * 8);
+      const money = Math.floor(this.liveT * (15 + this.subs * 0.002));
+      this.views += views;
+      this.subs += subsGain;
+      this.videos++;
+      G.eco.earn(money, true);
+      G.ui.toast('📺 Live terminé ! +' + U.fmtSubs(views) + ' vues, +' + U.fmtSubs(subsGain) + ' abonnés, +' + U.fmt(money), 'money');
+      G.sfx.levelup();
+      G.addXP(40);
+      this.liveT = 0; this.livePts = 0;
+      this.checkPerks();
     },
     publish() {
       if (!this.recording) return;
@@ -56,6 +82,16 @@
     },
     update(dt) {
       if (this.recording) this.sessionT += dt;
+      if (this.live) {
+        this.liveT += dt;
+        this.livePts += dt * (3 + this.subs * 0.0004);
+        if (Math.random() < dt / 20) {
+          const don = Math.floor(50 + this.subs * 0.01 * U.rand(20, 100));
+          G.eco.earn(don, true);
+          G.ui.toast('💰 Don de live : +' + U.fmt(don), 'money');
+          G.sfx.cash();
+        }
+      }
     }
   };
 

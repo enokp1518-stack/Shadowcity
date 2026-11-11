@@ -18,7 +18,8 @@
     { id: 'grow1', name: '🏡 Grow House — Docks', price: 25000, type: 'grow', pots: 6, loc: { i: 2, j: 1, dx: 12, dz: -12 }, desc: '6 pots de culture.' },
     { id: 'grow2', name: '🏡 Grow Deluxe — Green Heights', price: 60000, type: 'grow', pots: 12, loc: { i: 1, j: 8, dx: 12, dz: 12 }, desc: '12 pots, production sérieuse.' },
     { id: 'lab1', name: '⚗️ Labo Clandestin — Zone Ind.', price: 90000, type: 'lab', loc: { i: 8, j: 1, dx: -12, dz: -12 }, desc: 'Transforme la récolte en produits premium.' },
-    { id: 'stash', name: '📦 Planque — Downtown', price: 40000, type: 'stash', loc: { i: 4, j: 4, dx: 16, dz: 16 }, desc: '+100 de stockage, raids deux fois moins violents.' }
+    { id: 'stash', name: '📦 Planque — Downtown', price: 40000, type: 'stash', loc: { i: 4, j: 4, dx: 16, dz: 16 }, desc: '+100 de stockage, raids deux fois moins violents.' },
+    { id: 'garden', name: '🥬 Potager — Green Heights', price: 15000, type: 'garden', pots: 6, loc: { i: 2, j: 7, dx: 14, dz: -14 }, desc: 'Culture légale de légumes — argent propre !' }
   ];
 
   C.dirty = 0;
@@ -35,6 +36,16 @@
   C.plantGroups = {};
   C.raid = null;
   C.raidT = 480;
+  C.vegSold = 0;
+
+  C.VEG = {
+    carrot: { name: '🥕 Carotte', seed: 60, time: 100, sell: 150 },
+    tomato: { name: '🍅 Tomate', seed: 100, time: 140, sell: 260 },
+    corn: { name: '🌽 Maïs Doré', seed: 180, time: 180, sell: 480 },
+    pumpkin: { name: '🎃 Citrouille', seed: 300, time: 240, sell: 850 }
+  };
+  C.veg = {};
+  for (const id in C.VEG) C.veg[id] = { qty: 0 };
 
   for (const id in C.SEEDS) C.products[id] = { qty: 0, quality: 1 };
   for (const id in C.RECIPES) C.products[id] = { qty: 0, quality: 1 };
@@ -54,7 +65,7 @@
       p.x = cc.x + p.loc.dx; p.z = cc.z + p.loc.dz;
       G.world.makeMarker(p.x, p.z, 0x8a2be2, 'cartel_' + p.id);
       G.world.addStaticBlip(p.x, p.z, 0x8a2be2, p.name);
-      if (p.type === 'grow') C.buildPots3D(p);
+      if (p.type === 'grow' || p.type === 'garden') C.buildPots3D(p);
     }
   };
 
@@ -86,7 +97,7 @@
     if (!p || st.owned) return;
     if (!G.eco.spend(p.price)) return;
     st.owned = true;
-    if (p.type === 'grow') for (let k = 0; k < p.pots; k++) st.pots.push({ seed: null, progress: 0, water: 1, quality: 1 });
+    if (p.type === 'grow' || p.type === 'garden') for (let k = 0; k < p.pots; k++) st.pots.push({ seed: null, progress: 0, water: 1, quality: 1 });
     G.ui.toast('🔑 ' + p.name + ' acheté !', 'money');
     G.sfx.buy();
     G.addXP(80);
@@ -107,6 +118,49 @@
     pot.seed = id; pot.progress = 0; pot.water = 1; pot.quality = 1;
     G.ui.toast(s.name + ' plantée !', 'money');
     G.sfx.buy();
+  };
+
+  C.buyVeg = function (id) {
+    const v = C.VEG[id];
+    const garden = C.props.garden;
+    if (!garden.owned) { G.ui.toast('Achète le potager d\'abord !', 'warn'); G.sfx.deny(); return; }
+    const pot = garden.pots.find(pp => !pp.seed);
+    if (!pot) { G.ui.toast('Aucun pot libre au potager !', 'warn'); G.sfx.deny(); return; }
+    if (!G.eco.spend(v.seed)) return;
+    pot.seed = id; pot.progress = 0; pot.water = 1; pot.quality = 1;
+    G.ui.toast(v.name + ' planté au potager !', 'money');
+    G.sfx.buy();
+  };
+
+  C.harvestVeg = function () {
+    const garden = C.props.garden;
+    if (!garden.owned) return;
+    let total = 0;
+    for (const pot of garden.pots) {
+      if (pot.seed && pot.progress >= 1) {
+        C.veg[pot.seed].qty += 3;
+        pot.seed = null; pot.progress = 0; pot.quality = 1;
+        total += 3;
+      }
+    }
+    if (total > 0) {
+      G.ui.toast('🥕 Récolte potager : +' + total + ' légumes', 'money');
+      G.sfx.cash();
+    } else { G.ui.toast('Rien à récolter au potager', 'warn'); G.sfx.deny(); }
+  };
+
+  C.sellVeg = function (id) {
+    const v = C.VEG[id];
+    const inv = C.veg[id];
+    if (!inv || inv.qty <= 0) { G.ui.toast('Aucun ' + v.name + ' en stock', 'warn'); G.sfx.deny(); return; }
+    const n = inv.qty;
+    const gain = Math.floor(v.sell * n * U.rand(0.9, 1.1));
+    inv.qty = 0;
+    C.vegSold += n;
+    G.eco.earn(gain);
+    G.addXP(15);
+    G.ui.toast('🌽 Vente de légumes : +' + U.fmt(gain) + ' (argent propre)', 'money');
+    G.sfx.cash();
   };
 
   C.waterAll = function () {
@@ -297,6 +351,7 @@
   };
 
   C.update = function (dt) {
+    const spd = G.eco.equipped.includes('chronos') ? 1.3 : 1;
     for (const id in C.props) {
       const st = C.props[id];
       const prop = C.PROPERTIES.find(p => p.id === id);
@@ -306,10 +361,10 @@
           if (!pot.seed) continue;
           if (pot.water > 0) {
             pot.water -= dt / 150;
-            pot.progress = Math.min(1, pot.progress + dt / C.SEEDS[pot.seed].growTime);
+            pot.progress = Math.min(1, pot.progress + dt / C.SEEDS[pot.seed].growTime * spd);
           } else {
             pot.quality = Math.max(0.4, pot.quality - dt * 0.004);
-            pot.progress = Math.min(1, pot.progress + dt / C.SEEDS[pot.seed].growTime * 0.15);
+            pot.progress = Math.min(1, pot.progress + dt / C.SEEDS[pot.seed].growTime * 0.15 * spd);
           }
           const plant = C.plantGroups[id] && C.plantGroups[id][k];
           if (plant) {
@@ -319,8 +374,21 @@
           }
         }
       }
+      if (prop.type === 'garden') {
+        for (let k = 0; k < st.pots.length; k++) {
+          const pot = st.pots[k];
+          if (!pot.seed) continue;
+          pot.progress = Math.min(1, pot.progress + dt / C.VEG[pot.seed].time * spd);
+          const plant = C.plantGroups[id] && C.plantGroups[id][k];
+          if (plant) {
+            plant.visible = true;
+            plant.scale.setScalar(0.2 + pot.progress * 0.7);
+            plant.material.color.setHex(pot.progress >= 1 ? 0xe07820 : 0x3da53a);
+          }
+        }
+      }
       if (prop.type === 'lab' && st.batch) {
-        st.batch.progress += dt / C.RECIPES[st.batch.recipe].time;
+        st.batch.progress += dt / C.RECIPES[st.batch.recipe].time * spd;
         if (st.batch.progress >= 1) {
           const r = C.RECIPES[st.batch.recipe];
           const prod = C.products[st.batch.recipe];
@@ -451,7 +519,8 @@
   C.reset = function () {
     C.dirty = 0; C.heat = 0; C.rep = 0; C.reagent = 0;
     C.dealers = []; C.contract = null; C.convoy = null; C.laundered = 0;
-    C.raid = null; C.raidT = 480;
+    C.raid = null; C.raidT = 480; C.vegSold = 0;
+    for (const id in C.veg) C.veg[id].qty = 0;
     for (const id in C.products) { C.products[id].qty = 0; C.products[id].quality = 1; }
     for (const pid in C.props) { C.props[pid].owned = false; C.props[pid].pots = []; C.props[pid].batch = null; }
     for (const key in C.plantGroups) {
@@ -466,7 +535,8 @@
     }
     return {
       dirty: C.dirty, heat: C.heat, rep: C.rep, reagent: C.reagent,
-      props, products: C.products, dealers: C.dealers, contract: C.contract
+      props, products: C.products, dealers: C.dealers, contract: C.contract,
+      veg: C.veg, vegSold: C.vegSold
     };
   };
 
@@ -479,6 +549,8 @@
     for (const id in (d.products || {})) if (C.products[id]) C.products[id] = d.products[id];
     C.dealers = d.dealers || [];
     C.contract = d.contract || null;
+    for (const id in (d.veg || {})) if (C.veg[id]) C.veg[id].qty = d.veg[id].qty || 0;
+    C.vegSold = d.vegSold || 0;
     for (const p of C.PROPERTIES) {
       if (p.type === 'grow' && C.props[p.id].owned && C.props[p.id].pots.length === 0) {
         for (let k = 0; k < p.pots; k++) C.props[p.id].pots.push({ seed: null, progress: 0, water: 1, quality: 1 });
@@ -514,6 +586,18 @@
       const s = C.SEEDS[id];
       const lock = C.rep < s.rep;
       html += `<div class="row"><div class="info"><div class="name">${s.name}</div><div class="desc">${s.desc} — ${Math.round(s.growTime / 60)} min${lock ? ' • 🔒 Rép. ' + s.rep : ''}</div></div><button data-a="cx:seed:${id}" ${lock ? 'disabled' : ''}>${U.fmt(s.price)}</button></div>`;
+    }
+
+    html += '<div class="secTitle">Potager (légal — argent propre)</div>';
+    if (!C.props.garden.owned) {
+      html += `<div class="row"><div class="info"><div class="name">🥬 Potager — Green Heights</div><div class="desc">6 pots de légumes — revenus 100% légaux</div></div><button data-a="cx:buyprop:garden" class="gold">${U.fmt(15000)}</button></div>`;
+    } else {
+      html += `<div class="row"><div class="info"><div class="name">✅ Potager</div><div class="desc">Planter → attendre → récolter 3 légumes / pot${G.eco.equipped.includes('chronos') ? ' • ⏱ Chronos : +30% vitesse' : ''}</div></div><button data-a="cx:harvestveg" class="green">Récolter</button></div>`;
+      for (const id in C.VEG) {
+        const v = C.VEG[id];
+        html += `<div class="row"><div class="info"><div class="name">${v.name}</div><div class="desc">Pousse en ${Math.round(v.time / 60)} min → vendu ~${U.fmt(v.sell)}/u • Stock : ${C.veg[id].qty}</div></div><button data-a="cx:veg:${id}">${U.fmt(v.seed)}</button></div>`;
+        if (C.veg[id].qty > 0) html += `<div class="row"><div class="info"><div class="desc">Vendre ${C.veg[id].qty} × ${v.name}</div></div><button data-a="cx:sellveg:${id}" class="green">Vendre</button></div>`;
+      }
     }
 
     html += '<div class="secTitle">Labo</div>';
@@ -562,6 +646,9 @@
       case 'hire': C.hireDealer(arg); break;
       case 'supply': C.supplyDealer(parseInt(arg)); break;
       case 'launder': C.launder(arg === 'all' ? C.dirty : parseInt(arg)); break;
+      case 'veg': C.buyVeg(arg); break;
+      case 'harvestveg': C.harvestVeg(); break;
+      case 'sellveg': C.sellVeg(arg); break;
     }
   };
 })();

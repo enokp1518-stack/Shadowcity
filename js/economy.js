@@ -19,6 +19,11 @@
     dragon: { name: '🐉 Bébé Dragon', price: 120000, desc: 'Crache des boules de feu (30 dmg) toutes les 4s.', bonus: 'boule de feu (30 dmg)' },
     wolf: { name: '🐺 Loup Alpha', price: 60000, desc: 'Déchire vos ennemis proches (25 dmg).', bonus: 'attaque (25 dmg)' },
     owl: { name: '🦉 Chouette Sage', price: 30000, desc: "+20% d'XP sur tout ce que tu fais.", bonus: '+20% XP' },
+    unicorn: { name: '🦄 Licorne', price: 200000, desc: 'Aura magique : +15% revenus et te soigne (2 PV/s).', bonus: '+15% revenus, soin' },
+    bear: { name: '🐻 Ours Cuirassé', price: 150000, desc: 'Encaisse à ta place : -25% dégâts subis.', bonus: '-25% dégâts subis' },
+    cobra: { name: '🐍 Cobra Royal', price: 90000, desc: 'Morsure venimeuse : 12 dmg puis poison.', bonus: 'attaque + poison' },
+    bat: { name: '🦇 Chauve-souris Sonar', price: 75000, desc: 'Révèle TOUS les ennemis sur la minimap.', bonus: 'radar total' },
+    turtle: { name: '🐢 Tortue Zen', price: 45000, desc: 'Méditation : +3 PV/s et +10% XP.', bonus: 'régén +10% XP' },
     robotcat: { name: '🤖 Chat-Robot', price: 0, desc: 'Cadeau des 100K abonnés. +10% sur tous les revenus.', bonus: '+10% revenus', unlock: '100K abonnés' }
   };
 
@@ -30,7 +35,13 @@
     ghost: { name: 'Éclat Fantôme', price: 30000, desc: 'La police vous remarque 30% moins.', stealth: 0.3 },
     void: { name: 'Pierre du Vide', price: 90000, desc: '+25% dégâts.', dmg: 0.25 },
     eye: { name: 'Œil du Faucon', price: 45000, desc: 'Précision +30% (dispersion réduite).' },
-    titan: { name: 'Cœur de Titan', price: 70000, desc: '+30 PV maximum.' }
+    titan: { name: 'Cœur de Titan', price: 70000, desc: '+30 PV maximum.' },
+    ankh: { name: '☥ Ankh de Résurrection', price: 250000, desc: 'Ressuscite sur place au lieu de mourir (1× / 5 min).' },
+    chronos: { name: '⏳ Sablier de Chronos', price: 180000, desc: 'Cultures, labos et potager +30% plus rapides.' },
+    zeus: { name: '⚡ Foudre de Zeus', price: 200000, desc: 'Foudroie un ennemi proche (45 dmg) toutes les 5s.' },
+    frost: { name: '❄️ Couronne de Glace', price: 160000, desc: 'Gèle les ennemis à moins de 12 m (-40% vitesse).' },
+    vampire: { name: '🦧 Croc de Vampire', price: 220000, desc: 'Récupère 10% des dégâts infligés en PV.' },
+    ninja: { name: '🥷 Masque Shinobi', price: 150000, desc: '+15% vitesse et saut surhumain.' }
   };
 
   E.petsOwned = [];
@@ -54,6 +65,9 @@
       if (a.stealth) b.stealth += a.stealth;
     }
     if (E.activePet === 'robotcat') b.money += 0.1;
+    if (E.activePet === 'unicorn') { b.money += 0.15; b.regen += 2; }
+    if (E.activePet === 'turtle') b.regen += 3;
+    if (E.equipped.includes('chronos')) b.money += 0.15;
     if (G.yt && G.yt.perks.includes('sponsor')) b.money += 0.5;
     return b;
   };
@@ -131,8 +145,8 @@
   E.refreshPet = function () {
     if (E.petObj) { G.scene.remove(E.petObj); E.petObj = null; }
     if (!E.activePet || !E.petsOwned.includes(E.activePet)) { E.activePet = null; return; }
-    const colors = { dog: 0xc49a6c, falcon: 0x8a6f4d, panther: 0x1a1a1e, dragon: 0xc23a2f, robotcat: 0x9ab0c8, wolf: 0x7a8087, owl: 0x8a6f3d };
-    const scales = { dog: 0.55, falcon: 0.4, panther: 0.65, dragon: 0.6, robotcat: 0.5, wolf: 0.7, owl: 0.35 };
+    const colors = { dog: 0xc49a6c, falcon: 0x8a6f4d, panther: 0x1a1a1e, dragon: 0xc23a2f, robotcat: 0x9ab0c8, wolf: 0x7a8087, owl: 0x8a6f3d, unicorn: 0xf0e6ff, bear: 0x5a3d28, cobra: 0x2d6a34, bat: 0x2a2438, turtle: 0x2d8a34 };
+    const scales = { dog: 0.55, falcon: 0.4, panther: 0.65, dragon: 0.6, robotcat: 0.5, wolf: 0.7, owl: 0.35, unicorn: 0.75, bear: 0.9, cobra: 0.4, bat: 0.3, turtle: 0.45 };
     E.petObj = G.makeHumanoid(colors[E.activePet] || 0xffffff, scales[E.activePet] || 0.5);
     G.scene.add(E.petObj);
   };
@@ -158,11 +172,27 @@
     G.sfx.ui();
   };
 
+  E.bizIncome = function (b) { return b.income * (1 + 0.5 * ((b.level || 1) - 1)); };
+
+  E.upgradeBusiness = function (id) {
+    const b = E.businesses.find(x => x.id === id);
+    if (!b || !b.owned) return;
+    const lvl = b.level || 1;
+    if (lvl >= 3) { G.ui.toast('Niveau maximum atteint (3)', 'warn'); G.sfx.deny(); return; }
+    const cost = Math.floor(b.price * 0.6 * lvl);
+    if (!E.spend(cost)) return;
+    b.level = lvl + 1;
+    G.ui.toast('🏗 ' + b.name + ' amélioré niveau ' + b.level + ' ! Revenu : ' + U.fmt(E.bizIncome(b)) + '/min', 'money');
+    G.sfx.buy();
+    G.addXP(80);
+    if (G.yt.recording || G.yt.live) G.yt.addEvent(50, 'Travaux en direct !');
+  };
+
   E.buyBusiness = function (id) {
     const b = E.businesses.find(x => x.id === id);
     if (!b || b.owned) return;
     if (!E.spend(b.price)) return;
-    b.owned = true; b.stored = 0;
+    b.owned = true; b.stored = 0; b.level = 1;
     G.ui.toast('🏢 ' + b.name + ' vous appartient ! Revenu : ' + U.fmt(b.income) + '/min', 'money');
     G.sfx.buy();
     G.addXP(100);
@@ -188,11 +218,36 @@
     } else G.ui.toast('Rien à encaisser pour le moment', 'warn');
   };
 
+  E.reviveCd = 0;
+  E.zeusCd = 0;
+
   E.update = function (dt) {
     const b = E.bonuses();
     for (const biz of E.businesses) {
       if (!biz.owned) continue;
-      biz.stored = Math.min(biz.income * 120, biz.stored + biz.income / 60 * b.money * dt);
+      const inc = E.bizIncome(biz);
+      biz.stored = Math.min(inc * 120, biz.stored + inc / 60 * b.money * dt);
+    }
+    E.reviveCd = Math.max(0, E.reviveCd - dt);
+    E.zeusCd = Math.max(0, E.zeusCd - dt);
+    if (E.equipped.includes('zeus') && E.zeusCd <= 0) {
+      let best = null, bd = 900;
+      for (const n of G.npcs) {
+        if (n.dead || n.type === 'ped') continue;
+        const d = U.d2(n.obj.position.x, n.obj.position.z, G.player.pos.x, G.player.pos.z);
+        if (d < bd) { bd = d; best = n; }
+      }
+      if (best) {
+        E.zeusCd = 5;
+        const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 1.4, 34, 8),
+          new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.85 }));
+        bolt.position.set(best.obj.position.x, 17, best.obj.position.z);
+        G.scene.add(bolt);
+        G.effects.push({ obj: bolt, ttl: 0.3 });
+        G.sfx.explode();
+        G.damageNPC(best, 45, false);
+        G.ui.toast('⚡ Zeus foudroie un ennemi !');
+      }
     }
     if (G.yt.subs > 0) G.player.money += G.yt.subs * 0.002 / 60 * dt * b.money;
 
@@ -208,7 +263,7 @@
       E.petObj.rotation.y = G.player.obj.rotation.y;
 
       E.petAtkCd -= dt;
-      if (E.petAtkCd <= 0 && (E.activePet === 'panther' || E.activePet === 'dragon' || E.activePet === 'wolf')) {
+      if (E.petAtkCd <= 0 && (E.activePet === 'panther' || E.activePet === 'dragon' || E.activePet === 'wolf' || E.activePet === 'cobra')) {
         for (const n of G.npcs) {
           if (n.dead) continue;
           if (U.d2(n.obj.position.x, n.obj.position.z, t.x, t.z) < 196) {
@@ -216,7 +271,8 @@
             if (E.activePet === 'dragon') {
               G.combat.explode(G.V3(n.obj.position.x, 1, n.obj.position.z), 3, 30, true);
             } else {
-              G.damageNPC(n, E.activePet === 'wolf' ? 25 : 15, false);
+              G.damageNPC(n, E.activePet === 'wolf' ? 25 : E.activePet === 'cobra' ? 12 : 15, false);
+              if (E.activePet === 'cobra') n.burnT = Math.max(n.burnT || 0, 3);
               G.sfx.melee();
             }
             break;

@@ -46,6 +46,7 @@ G.input.pulse = function (k) { if (this.pressed[k]) { this.pressed[k] = false; r
     if (e.code === 'KeyT') G.yt.toggleRecord();
     if (e.code === 'Escape') G.ui.togglePause();
     if (e.code === 'KeyH') G.eco.useMedkit();
+    if (e.code === 'KeyM' && G.radio) G.radio.next();
   });
   addEventListener('keyup', (e) => { I.keys[e.code] = false; });
 })();
@@ -219,11 +220,15 @@ G.newGame = function () {
   p.pos.set(c0.x, 0, c0.z + 20); p.vel.set(0, 0, 0);
   for (const k in G.stats) G.stats[k] = 0;
   G.yt.recording = false; G.yt.subs = 0; G.yt.views = 0; G.yt.videos = 0; G.yt.perks = [];
+  G.yt.live = false; G.yt.liveT = 0; G.yt.livePts = 0;
   G.eco.petsOwned = []; G.eco.activePet = null; G.eco.refreshPet();
   G.eco.artifactsOwned = []; G.eco.equipped = [];
-  G.eco.businesses.forEach(b => { b.owned = false; b.stored = 0; });
+  G.eco.businesses.forEach(b => { b.owned = false; b.stored = 0; b.level = 1; });
   G.world.districts.forEach(d => d.owned = false);
   G.cartel.reset();
+  if (G.jobs) { G.jobs.active = null; G.jobs.done = 0; }
+  if (G.quests) G.quests.reset();
+  if (G.radio) { G.radio.station = -1; if (G.radio.resetHeard) G.radio.resetHeard(); }
   G.modes.missionIdx = 0; G.modes.stageIdx = 0;
   G.modes.war = { active: false, district: null, needed: 0, kills: 0 };
   G.modes.survival = { active: false, wave: 0, alive: 0, breakT: 0 };
@@ -256,6 +261,7 @@ G.recalcMaxHp = function () {
 G.addXP = function (n) {
   const p = G.player; if (!p) return;
   if (G.eco && G.eco.activePet === 'owl') n = Math.floor(n * 1.2);
+  else if (G.eco && G.eco.activePet === 'turtle') n = Math.floor(n * 1.1);
   p.xp += n;
   const lvl = Math.floor(Math.sqrt(p.xp / 80)) + 1;
   if (lvl > p.level) {
@@ -281,7 +287,11 @@ G.ACHIEVEMENTS = [
   { id: 'veteran', name: 'Vétéran', desc: 'Atteindre le niveau 10', cond: () => G.player.level >= 10, reward: 10000 },
   { id: 'tycoon', name: 'Magnat', desc: 'Posséder les 6 business', cond: () => G.eco.businesses.every(b => b.owned), reward: 25000 },
   { id: 'cartel', name: 'Baron de la poudre', desc: '100 de réputation cartel', cond: () => G.cartel.rep >= 100, reward: 8000 },
-  { id: 'star', name: 'Star de ShadowTV', desc: '100 000 abonnés', cond: () => G.yt.subs >= 100000, reward: 15000 }
+  { id: 'star', name: 'Star de ShadowTV', desc: '100 000 abonnés', cond: () => G.yt.subs >= 100000, reward: 15000 },
+  { id: 'worker', name: 'Travailleur', desc: '5 jobs terminés', cond: () => G.jobs && G.jobs.done >= 5, reward: 3000 },
+  { id: 'helper', name: 'Bon samaritain', desc: '5 quêtes de PNJ terminées', cond: () => G.quests && G.quests.done >= 5, reward: 4000 },
+  { id: 'farmer', name: 'Marâcher', desc: '50 légumes vendus', cond: () => G.cartel && (G.cartel.vegSold || 0) >= 50, reward: 5000 },
+  { id: 'radio', name: 'Mélomane', desc: 'Écouter toutes les stations de radio', cond: () => G.radio && G.radio.heard >= 4, reward: 2000 }
 ];
 
 G.checkAchievements = function () {
@@ -303,12 +313,14 @@ G.saveData = function () {
     v: G.version,
     money: p.money, xp: p.xp, level: p.level, hp: p.hp,
     weapons: p.weapons, cur: p.cur,
-    businesses: G.eco.businesses.map(b => ({ id: b.id, owned: b.owned, stored: Math.floor(b.stored) })),
+    businesses: G.eco.businesses.map(b => ({ id: b.id, owned: b.owned, stored: Math.floor(b.stored), level: b.level || 1 })),
     districts: G.world.districts.map(d => ({ id: d.id, owned: d.owned })),
     pets: G.eco.petsOwned, pet: G.eco.activePet,
     artifacts: G.eco.artifactsOwned, equipped: G.eco.equipped,
     yt: { subs: G.yt.subs, views: G.yt.views, videos: G.yt.videos, perks: G.yt.perks },
     cartel: G.cartel.serialize(),
+    jobs: { done: G.jobs ? G.jobs.done : 0 },
+    quests: { done: G.quests ? G.quests.done : 0 },
     missions: G.modes.missionIdx,
     stats: G.stats,
     settings: G.settings,
@@ -332,11 +344,13 @@ G.applySave = function (d) {
   p.level = d.level || 1; p.maxHp = 100 + (p.level - 1) * 10; p.hp = d.hp || p.maxHp;
   if (d.weapons) for (const k in d.weapons) if (G.combat.WEAPONS[k]) p.weapons[k] = d.weapons[k];
   p.cur = d.cur || 'fists';
-  if (d.businesses) d.businesses.forEach(s => { const b = G.eco.businesses.find(x => x.id === s.id); if (b) { b.owned = s.owned; b.stored = s.stored || 0; } });
+  if (d.businesses) d.businesses.forEach(s => { const b = G.eco.businesses.find(x => x.id === s.id); if (b) { b.owned = s.owned; b.stored = s.stored || 0; b.level = s.level || 1; } });
   if (d.districts) d.districts.forEach(s => { const dd = G.world.districts.find(x => x.id === s.id); if (dd) dd.owned = s.owned; });
   G.eco.petsOwned = d.pets || []; G.eco.activePet = d.pet || null;
   G.eco.artifactsOwned = d.artifacts || []; G.eco.equipped = (d.equipped || []).slice(0, 3);
   if (d.yt) { G.yt.subs = d.yt.subs || 0; G.yt.views = d.yt.views || 0; G.yt.videos = d.yt.videos || 0; G.yt.perks = d.yt.perks || []; }
+  if (d.jobs && G.jobs) G.jobs.done = d.jobs.done || 0;
+  if (d.quests && G.quests) G.quests.done = d.quests.done || 0;
   G.cartel.deserialize(d.cartel);
   G.modes.missionIdx = d.missions || 0;
   G.modes.stageIdx = 0;
@@ -347,6 +361,8 @@ G.applySave = function (d) {
   if (G.player.obj) G.player.obj.userData.mat.color.setHex(G.settings.outfit);
   G.state.time = d.time || 9;
   G.eco.refreshPet();
+  G.recalcMaxHp();
+  p.hp = Math.min(p.hp, p.maxHp);
   return true;
 };
 G.hasSave = () => !!localStorage.getItem('shadowcity_v1');

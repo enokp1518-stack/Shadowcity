@@ -151,6 +151,9 @@
       G.combat.updateProjectiles(dt);
       G.eco.update(dt);
       G.cartel.update(dt);
+      G.jobs.update(dt);
+      G.quests.update(dt);
+      G.radio.update(dt);
       G.modes.update(dt);
       G.world.updateEnvironment(dt);
       handleInteraction();

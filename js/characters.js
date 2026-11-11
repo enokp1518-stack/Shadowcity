@@ -91,7 +91,7 @@
     }
 
     p.vel.y -= 26 * dt;
-    if (I.pulse('jump') && p.onGround) { p.vel.y = 9.5; p.onGround = false; G.sfx.melee(); }
+    if (I.pulse('jump') && p.onGround) { p.vel.y = G.eco.equipped.includes('ninja') ? 12.5 : 9.5; p.onGround = false; G.sfx.melee(); }
 
     let nx = p.pos.x + p.vel.x * dt, nz = p.pos.z + p.vel.z * dt;
     [nx, nz] = G.world.collideCircle(nx, nz, 0.45);
@@ -212,6 +212,10 @@
   G.damageNPC = function (npc, dmg, headshot) {
     if (npc.dead) return;
     npc.hp -= dmg;
+    if (G.eco && G.eco.equipped.includes('vampire')) {
+      const p = G.player;
+      p.hp = Math.min(p.maxHp, p.hp + dmg * 0.1);
+    }
     npc.aggro = true;
     npc.state = 'chase';
     G.sfx.hit();
@@ -271,6 +275,7 @@
   G.tracerFX = tracerFX;
 
   function moveNPC(npc, tx, tz, speed, dt) {
+    if (npc.frozen) speed *= 0.6;
     const dx = tx - npc.obj.position.x, dz = tz - npc.obj.position.z;
     const d = Math.hypot(dx, dz);
     if (d < 0.5) return 0;
@@ -307,6 +312,13 @@
 
       n.aiT -= dt;
       n.shootCd -= dt;
+
+      if (n.burnT > 0) {
+        n.burnT -= dt;
+        n.hp -= 9 * dt;
+        if (n.hp <= 0) { G.damageNPC(n, 1, false); continue; }
+      }
+      n.frozen = G.eco.equipped.includes('frost') && pd < 12;
 
       if (n.type === 'ped') {
         if (G.state.lastShotAt && performance.now() - G.state.lastShotAt < 3000 && pd < 30) n.state = 'flee';
