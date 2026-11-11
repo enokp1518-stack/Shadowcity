@@ -1,0 +1,436 @@
+'use strict';
+(function () {
+  const UI = {};
+  G.ui = UI;
+  const $ = (id) => document.getElementById(id);
+
+  let toastCount = 0;
+  UI.toast = function (msg, cls) {
+    const box = $('toasts');
+    const t = document.createElement('div');
+    t.className = 'toast' + (cls ? ' ' + cls : '');
+    t.textContent = msg;
+    box.appendChild(t);
+    toastCount++;
+    setTimeout(() => { t.style.opacity = '0'; t.style.transition = 'opacity .4s'; }, 2600);
+    setTimeout(() => { t.remove(); toastCount--; }, 3100);
+    while (box.children.length > 4) box.firstChild.remove();
+  };
+
+  UI.flash = function () {
+    $('vignette').style.boxShadow = 'inset 0 0 160px rgba(255,0,40,.75)';
+    setTimeout(() => { $('vignette').style.boxShadow = 'inset 0 0 120px rgba(0,0,0,.55)'; }, 180);
+  };
+
+  UI.bigMsg = function (txt, money) {
+    const b = $('bigMsg');
+    b.textContent = txt;
+    b.className = money ? 'money' : '';
+    b.classList.remove('hidden');
+  };
+  UI.hideBig = () => $('bigMsg').classList.add('hidden');
+
+  UI.setMission = function (title, text) {
+    $('missionTitle').textContent = title;
+    $('missionText').textContent = text;
+  };
+
+  let curTab = 'missions';
+  const TABS = [
+    ['missions', '📋 Contrats'], ['map', '🗺️ Carte'], ['guns', '🔫 Armurerie'],
+    ['pets', '🐾 Animaux'], ['arts', '🔮 Artefacts'], ['biz', '🏢 Business'],
+    ['yt', '📺 YouTube'], ['war', '⚔️ Gangs'], ['race', '🏁 Courses'],
+    ['settings', '⚙️ Réglages']
+  ];
+
+  UI.togglePhone = function () {
+    if (G.state.screen !== 'play') return;
+    if ($('phone').classList.contains('hidden')) UI.openPhone();
+    else UI.closePhone();
+  };
+  UI.openPhone = function (tab) {
+    if (G.state.screen !== 'play') return;
+    $('phone').classList.remove('hidden');
+    G.state.paused = true;
+    if (tab) curTab = tab;
+    UI.refreshPhone();
+    G.sfx.ui();
+  };
+  UI.closePhone = function () {
+    $('phone').classList.add('hidden');
+    G.state.paused = false;
+    G.sfx.ui();
+  };
+
+  function row(name, desc, btnLabel, action, opts) {
+    opts = opts || {};
+    return `<div class="row"><div class="info"><div class="name">${opts.ex ? '<span class="ex">' + name + '</span>' : name}</div><div class="desc">${desc}</div></div><button data-a="${action}" ${opts.dis ? 'disabled' : ''} class="${opts.cls || ''}">${btnLabel}</button></div>`;
+  }
+
+  function row2(name, desc, b1, b2, opts) {
+    opts = opts || {};
+    return `<div class="row"><div class="info"><div class="name">${opts.ex ? '<span class="ex">' + name + '</span>' : name}</div><div class="desc">${desc}</div></div><div style="display:flex;gap:5px"><button data-a="${b1.a}" ${b1.dis ? 'disabled' : ''} class="${b1.cls || ''}">${b1.l}</button>${b2 ? `<button data-a="${b2.a}" ${b2.dis ? 'disabled' : ''} class="${b2.cls || ''}">${b2.l}</button>` : ''}</div></div>`;
+  }
+
+  UI.refreshPhone = function () {
+    const tabsEl = $('phoneTabs');
+    tabsEl.innerHTML = TABS.map(t => `<button data-tab="${t[0]}" class="${t[0] === curTab ? 'on' : ''}">${t[1]}</button>`).join('');
+    const c = $('phoneContent');
+    const p = G.player;
+    const money = `<div class="secTitle">Solde : ${U.fmt(p.money)} — Niv. ${p.level} — ${U.fmtSubs(G.yt.subs)} abonnés</div>`;
+
+    if (curTab === 'missions') {
+      let html = money;
+      const idx = G.modes.missionIdx;
+      if (idx < G.modes.missions.length) {
+        const m = G.modes.missions[idx];
+        html += `<div class="secTitle">Contrat actuel</div>`;
+        html += row('📋 ' + m.title, m.stages[G.modes.stageIdx].text, 'En cours', 'noop', { dis: true, cls: 'green' });
+      } else html += row('👑 Légende urbaine', 'Tous les contrats sont terminés !', 'Fini', 'noop', { dis: true, cls: 'gold' });
+      html += `<div class="secTitle">Actions rapides</div>`;
+      html += row('🧪 Medkit (' + p.medkits + ')', 'Restaure 50 PV immédiatement — 150$', 'Acheter', 'medkit');
+      html += row('🎥 Caméra', G.yt.recording ? 'Enregistrement en cours... (' + Math.floor(G.yt.sessionT) + 's, ' + G.yt.points + ' pts)' : 'Filme tes exploits et publie pour gagner des abonnés', G.yt.recording ? 'Stop & publier' : 'Démarrer REC', 'record', { cls: G.yt.recording ? 'red' : '' });
+      html += `<div class="secTitle">Statistiques</div>`;
+      html += `<div class="row"><div class="info"><div class="desc">Éliminations : ${G.stats.kills} • Headshots : ${G.stats.headshots} • Courses gagnées : ${G.stats.racesWon}<br>Territoires : ${G.stats.captures}/5 • Vagues : ${G.stats.waves} • Boss : ${G.stats.bosses} • Gagné : ${U.fmt(G.stats.earned)}</div></div></div>`;
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'map') {
+      let html = money + '<div class="secTitle">Quartiers & territoires</div>';
+      for (const d of G.world.districts) {
+        html += row((d.owned ? '🏳️' : '⚔️') + ' ' + d.name,
+          d.owned ? 'Capturé — revenu passif actif' : 'Contrôlé par ' + d.gangName,
+          d.owned ? 'Capitale' : 'Attaquer', 'war:' + d.id, { cls: d.owned ? '' : 'red' });
+      }
+      html += '<div class="secTitle">Lieux importants</div>';
+      for (const l of G.world.specialLocations) {
+        const d = Math.sqrt(U.d2(p.pos.x, p.pos.z, l.x, l.z));
+        html += `<div class="row"><div class="info"><div class="name">${l.name}</div><div class="desc">À ${Math.floor(d)} m</div></div></div>`;
+      }
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'guns') {
+      let html = money + '<div class="secTitle">Arsenal d\'Arsene</div>';
+      for (const id in G.combat.WEAPONS) {
+        const w = G.combat.WEAPONS[id];
+        const owned = p.weapons[id];
+        if (owned) {
+          const isCur = p.cur === id;
+          html += row2((w.exclusive ? '★ ' : '') + w.name, w.desc + ' — Munitions : ' + slotAmmo(id) + ' / ' + slotReserve(id),
+            { l: isCur ? '✓ En main' : 'Équiper', a: 'equip:' + id, dis: isCur, cls: isCur ? 'green' : '' },
+            w.type === 'melee' ? null : { l: '+ Mun ' + U.fmt(w.ammoPrice), a: 'ammo:' + id, cls: 'gold' },
+            { ex: w.exclusive });
+        } else {
+          html += row(w.name, w.desc + (w.unlock ? ' — 🔒 ' + w.unlock : ''), U.fmt(w.price), 'buygun:' + id, { ex: w.exclusive, dis: !!w.unlock });
+        }
+      }
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'pets') {
+      let html = money + '<div class="secTitle">Compagnons (1 actif)</div>';
+      for (const id in E_PETS()) {
+        const pet = E_PETS()[id];
+        const owned = G.eco.petsOwned.includes(id);
+        const active = G.eco.activePet === id;
+        if (owned) html += row(pet.name, pet.desc + ' — Bonus : ' + pet.bonus, active ? '✓ Actif' : 'Activer', 'setpet:' + id, { dis: active, cls: 'green' });
+        else html += row(pet.name, pet.desc + (pet.unlock ? ' — 🔒 ' + pet.unlock : ''), pet.price ? U.fmt(pet.price) : 'Exclusif', 'buypet:' + id, { dis: !!pet.unlock });
+      }
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'arts') {
+      let html = money + `<div class="secTitle">Équipés (${G.eco.equipped.length}/3) — touche pour équiper</div>`;
+      for (const id in G.eco.ARTIFACTS) {
+        const a = G.eco.ARTIFACTS[id];
+        const owned = G.eco.artifactsOwned.includes(id);
+        const eq = G.eco.equipped.includes(id);
+        if (owned) html += row(a.name, a.desc, eq ? '✓ Équipé' : 'Équiper', 'art:' + id, { cls: eq ? 'green' : '' });
+        else html += row(a.name, a.desc, U.fmt(a.price), 'buyart:' + id);
+      }
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'biz') {
+      let html = money + '<div class="secTitle">Empire commercial</div>';
+      for (const b of G.eco.businesses) {
+        if (b.owned) {
+          html += row('🏢 ' + b.name, `Revenu : ${U.fmt(b.income)}/min — En caisse : ${U.fmt(b.stored)}`, 'Encaisser', 'collect:' + b.id, { cls: 'green', dis: b.stored < 1 });
+        } else {
+          html += row('🏢 ' + b.name, b.desc + ` — Revenu : ${U.fmt(b.income)}/min`, U.fmt(b.price), 'buybiz:' + b.id);
+        }
+      }
+      html += row('💰 Tout encaisser', 'Récupère la caisse de tous tes business', 'Collecter', 'collectall', { cls: 'gold' });
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'yt') {
+      const s = G.yt.subs;
+      let html = money;
+      html += `<div class="secTitle">Chaîne "ShadowTV" — ${U.fmtSubs(s)} abonnés • ${U.fmtSubs(G.yt.views)} vues • ${G.yt.videos} vidéos</div>`;
+      html += row('🎥 Caméra', G.yt.recording ? `REC... ${Math.floor(G.yt.sessionT)}s — ${G.yt.points} points de contenu` : 'Filme kills, courses, guerres et explosions pour du contenu', G.yt.recording ? 'Stop & publier' : 'Démarrer REC', 'record', { cls: G.yt.recording ? 'red' : '' });
+      html += `<div class="secTitle">Paliers</div>`;
+      html += row('🤝 Sponsoring', '+50% de revenus', s >= 10000 ? '✓ 10K' : '10K abonnés', 'noop', { dis: true, cls: s >= 10000 ? 'green' : '' });
+      html += row('🤖 Chat-Robot', 'Animal offert + +10% revenus', s >= 100000 ? '✓ 100K' : '100K abonnés', 'noop', { dis: true, cls: s >= 100000 ? 'green' : '' });
+      html += row('★ AK Dorée', 'Arme exclusive des stars', s >= 1000000 ? '✓ 1M' : '1M abonnés', 'noop', { dis: true, cls: s >= 1000000 ? 'green' : '' });
+      html += row('💎 Bouton de Diamant', 'Revenus x2 + 100 armure', s >= 10000000 ? '✓ 10M' : '10M abonnés', 'noop', { dis: true, cls: s >= 10000000 ? 'green' : '' });
+      html += `<div class="secTitle">Revenu passif</div>`;
+      html += `<div class="row"><div class="info"><div class="desc">Publicité : ${U.fmt(s * 0.002)}/min grâce à tes abonnés</div></div></div>`;
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'war') {
+      let html = money + '<div class="secTitle">Guerre des gangs</div>';
+      for (const d of G.world.districts) {
+        html += row((d.owned ? '🏳️ ' : '⚔️ ') + d.name,
+          d.owned ? 'Territoire capturé — revenu passif' : `Contrôlé par ${d.gangName} — capture pour revenu passif`,
+          d.owned ? 'Conquis' : 'Attaquer', 'war:' + d.id, { cls: d.owned ? '' : 'red', dis: d.owned });
+      }
+      html += `<div class="secTitle">Police</div>`;
+      html += row('🚨 Niveau de recherche : ' + p.wanted, 'Sème la police ou soudoie-la', 'Soudoyer ' + U.fmt(300 * p.wanted), 'bribe', { dis: p.wanted <= 0 });
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'race') {
+      let html = money + '<div class="secTitle">Courses de rue (en voiture !)</div>';
+      M_RACES().forEach((r, i) => {
+        html += row('🏁 ' + r.name, `${r.cps.length} checkpoints — 1er : ${U.fmt(r.reward)}`, 'Participer', 'race:' + i, { cls: 'gold' });
+      });
+      c.innerHTML = html;
+    }
+
+    if (curTab === 'settings') {
+      const s = G.settings;
+      let html = '<div class="secTitle">Graphismes</div>';
+      html += row('🖥️ Qualité', 'Perf (fluide) • HD • Ultra 4K (mobiles puissants)', { perf: 'Perf', hd: 'HD', ultra: 'Ultra 4K' }[s.quality], 'quality', { cls: 'gold' });
+      html += row('🌗 Ombres', 'Ombres dynamiques (Plus beau, plus gourmand)', s.shadows ? 'ON' : 'OFF', 'shadows', { cls: s.shadows ? 'green' : '' });
+      html += '<div class="secTitle">Audio & contrôles</div>';
+      html += row('🔊 Son', 'Effets sonores', s.sound ? 'ON' : 'OFF', 'sound', { cls: s.sound ? 'green' : '' });
+      html += row('🖱️ Sensibilité', 'Caméra / visée : ' + s.sens.toFixed(1) + 'x', '+ / −', 'sens');
+      html += '<div class="secTitle">Sauvegarde</div>';
+      html += row('💾 Sauvegarder', 'Ta progression est stockée sur cet appareil', 'Sauvegarder', 'save', { cls: 'green' });
+      html += row('🗑️ Nouvelle partie', 'Efface la sauvegarde et recommence à zéro', 'Tout effacer', 'wipe', { cls: 'red' });
+      c.innerHTML = html;
+    }
+  };
+
+  function E_PETS() { return G.eco.PETS; }
+  function M_RACES() { return G.modes.RACES; }
+  function slotAmmo(id) { const s = G.player.weapons[id]; return s ? (s.ammo === Infinity ? '∞' : s.ammo) : 0; }
+  function slotReserve(id) { const s = G.player.weapons[id]; return s ? (s.reserve === Infinity ? '∞' : s.reserve) : 0; }
+
+  $('phoneTabs').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    curTab = b.dataset.tab;
+    UI.refreshPhone();
+    G.sfx.ui();
+  });
+  $('phoneContent').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-a]');
+    if (!b || b.disabled) return;
+    const [act, arg] = b.dataset.a.split(':');
+    phoneAction(act, arg);
+  });
+  $('phoneClose').addEventListener('click', () => UI.closePhone());
+
+  function phoneAction(act, arg) {
+    G.sfx.ui();
+    switch (act) {
+      case 'medkit': G.eco.buyMedkit(); break;
+      case 'record': G.yt.toggleRecord(); break;
+      case 'buygun': G.eco.buyWeapon(arg); break;
+      case 'equip': G.player.cur = arg; G.player.reloadT = 0; G.ui.toast('🔫 ' + G.combat.WEAPONS[arg].name + ' en main'); break;
+      case 'ammo': G.eco.buyAmmo(arg); break;
+      case 'buypet': G.eco.buyPet(arg); break;
+      case 'setpet': G.eco.setPet(arg); break;
+      case 'buyart': G.eco.buyArtifact(arg); break;
+      case 'art': G.eco.toggleArtifact(arg); break;
+      case 'buybiz': G.eco.buyBusiness(arg); break;
+      case 'collect': G.eco.collect(arg); break;
+      case 'collectall': G.eco.collectAll(); break;
+      case 'war': G.closePhoneAfter(() => G.modes.startWar(arg)); break;
+      case 'race': G.closePhoneAfter(() => G.modes.startRace(parseInt(arg))); break;
+      case 'bribe':
+        if (G.player.wanted > 0 && G.eco.spend(300 * G.player.wanted)) {
+          G.player.wanted = 0;
+          G.ui.toast('💵 Police soudoyée — recherche annulée', 'money');
+        }
+        break;
+      case 'save': G.save(); break;
+      case 'wipe':
+        if (confirm('Effacer définitivement la sauvegarde ?')) {
+          G.wipeSave();
+          location.reload();
+        }
+        break;
+      case 'quality': {
+        const order = ['perf', 'hd', 'ultra'];
+        G.settings.quality = order[(order.indexOf(G.settings.quality) + 1) % 3];
+        G.ui.applySettings();
+        break;
+      }
+      case 'shadows': G.settings.shadows = !G.settings.shadows; G.ui.applySettings(); break;
+      case 'sound': G.settings.sound = !G.settings.sound; if (!G.settings.sound) G.sfx.engine(false); break;
+      case 'sens': {
+        const steps = [0.5, 0.75, 1, 1.5, 2];
+        G.settings.sens = steps[(steps.indexOf(G.settings.sens) + 1) % steps.length] || 1;
+        break;
+      }
+    }
+    UI.refreshPhone();
+  }
+
+  G.closePhoneAfter = function (fn) {
+    UI.closePhone();
+    setTimeout(fn, 100);
+  };
+
+  UI.togglePause = function () {
+    if (G.state.screen !== 'play') return;
+    if (!$('phone').classList.contains('hidden')) { UI.closePhone(); return; }
+    const p = $('pause');
+    if (p.classList.contains('hidden')) {
+      p.classList.remove('hidden');
+      G.state.paused = true;
+    } else {
+      p.classList.add('hidden');
+      G.state.paused = false;
+    }
+    G.sfx.ui();
+  };
+
+  $('pause').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    const a = b.dataset.p;
+    if (a === 'resume') UI.togglePause();
+    if (a === 'save') G.save();
+    if (a === 'settings') { UI.togglePause(); UI.openPhone('settings'); }
+    if (a === 'quit') location.reload();
+  });
+
+  UI.applySettings = function () {
+    const s = G.settings, r = G.renderer;
+    if (!r) return;
+    const dpr = window.devicePixelRatio || 1;
+    let base = 1;
+    if (s.quality === 'hd') base = Math.min(dpr, 1.6);
+    if (s.quality === 'ultra') base = Math.min(dpr, 3);
+    r.setPixelRatio(base * G.state.resScale);
+    r.shadowMap.enabled = s.shadows;
+    if (G.world && G.world.sun) {
+      G.world.sun.castShadow = s.shadows;
+      if (s.shadows) {
+        G.world.sun.shadow.mapSize.set(1024, 1024);
+        G.world.sun.shadow.camera.left = -80; G.world.sun.shadow.camera.right = 80;
+        G.world.sun.shadow.camera.top = 80; G.world.sun.shadow.camera.bottom = -80;
+        G.world.sun.shadow.camera.far = 400;
+      }
+    }
+    if (G.world && G.world.applyFogDistance) G.world.applyFogDistance();
+    G.save(true);
+  };
+
+  const mm = document.getElementById('minimap');
+  const mmCtx = mm.getContext('2d');
+
+  UI.drawMinimap = function () {
+    const S = mm.width, half = S / 2;
+    const view = 260;
+    const p = G.player;
+    const scale = S / view;
+    const ctx = mmCtx;
+    ctx.clearRect(0, 0, S, S);
+    ctx.fillStyle = '#12161f';
+    ctx.fillRect(0, 0, S, S);
+
+    ctx.save();
+    ctx.translate(half, half);
+    ctx.scale(scale, scale);
+    ctx.translate(-p.pos.x, -p.pos.z);
+
+    for (const d of G.world.districts) {
+      const x0 = G.world.ORIGIN + d.cells[0] * G.world.CELL;
+      const z0 = G.world.ORIGIN + d.cells[1] * G.world.CELL;
+      const w = (d.cells[2] - d.cells[0] + 1) * G.world.CELL;
+      const h = (d.cells[3] - d.cells[1] + 1) * G.world.CELL;
+      ctx.fillStyle = d.owned ? 'rgba(47,212,110,0.25)' : d.color + '44';
+      ctx.fillRect(x0, z0, w, h);
+    }
+    ctx.strokeStyle = 'rgba(200,220,255,0.35)';
+    ctx.lineWidth = 12;
+    for (let i = 0; i <= G.world.GRID; i++) {
+      const c = G.world.roadCoord(i);
+      ctx.beginPath(); ctx.moveTo(c, G.world.ORIGIN); ctx.lineTo(c, -G.world.ORIGIN); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(G.world.ORIGIN, c); ctx.lineTo(-G.world.ORIGIN, c); ctx.stroke();
+    }
+
+    for (const b of G.world.blips) {
+      ctx.fillStyle = '#' + b.color.toString(16).padStart(6, '0');
+      ctx.beginPath(); ctx.arc(b.x, b.z, 9, 0, Math.PI * 2); ctx.fill();
+    }
+    const sm = G.modes.storyMarker;
+    if (sm) {
+      ctx.fillStyle = '#ffd23e';
+      ctx.beginPath(); ctx.arc(sm.x, sm.z, 12, 0, Math.PI * 2); ctx.fill();
+    }
+    for (const n of G.npcs) {
+      if (n.dead) continue;
+      if (n.type === 'cop' || (G.eco.hasPet('falcon') && (n.type === 'creature' || n.aggro || n.warTag))) {
+        ctx.fillStyle = n.type === 'cop' ? '#4d8dff' : '#ff4d4d';
+        ctx.beginPath(); ctx.arc(n.obj.position.x, n.obj.position.z, 6, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(half, half);
+    ctx.rotate(G.player.inCar ? G.player.inCar.yaw + Math.PI : G.cam.yaw + Math.PI);
+    ctx.fillStyle = '#7dffb0';
+    ctx.beginPath();
+    ctx.moveTo(0, -9); ctx.lineTo(6, 7); ctx.lineTo(-6, 7);
+    ctx.closePath(); ctx.fill();
+    ctx.restore();
+
+    ctx.strokeStyle = 'rgba(120,200,255,.4)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(1, 1, S - 2, S - 2);
+  };
+
+  UI.updateHUD = function () {
+    const p = G.player;
+    $('hpFill').style.width = U.clamp(p.hp / p.maxHp * 100, 0, 100) + '%';
+    $('apFill').style.width = U.clamp(p.armor / 100 * 100, 0, 100) + '%';
+    $('money').textContent = U.fmt(p.money);
+    $('level').textContent = 'Niv. ' + p.level + ' — ⭐ ' + U.fmtSubs(G.yt.subs) + ' abonnés';
+    let stars = '';
+    for (let i = 0; i < 5; i++) stars += i < p.wanted ? '★' : '☆';
+    $('stars').textContent = stars;
+
+    const w = G.combat.WEAPONS[p.cur], slot = p.weapons[p.cur];
+    $('weaponName').textContent = w.name;
+    if (w.type === 'melee') $('weaponAmmo').textContent = '';
+    else if (p.reloadT > 0) $('weaponAmmo').textContent = 'Recharge...';
+    else $('weaponAmmo').textContent = (slot.ammo === Infinity ? '' : slot.ammo) + ' / ' + (slot.reserve === Infinity ? '∞' : slot.reserve);
+
+    if (p.inCar) {
+      $('speedo').classList.remove('hidden');
+      $('speedo').textContent = Math.abs(Math.round(p.inCar.speed * 3.6)) + ' km/h';
+    } else $('speedo').classList.add('hidden');
+
+    $('crosshair').classList.toggle('hidden', !p.aiming);
+    $('recDot').classList.toggle('hidden', !G.yt.recording);
+    $('subCounter').classList.toggle('hidden', !G.yt.recording);
+    if (G.yt.recording) $('subCounter').textContent = '🎬 ' + G.yt.points + ' pts • ' + Math.floor(G.yt.sessionT) + 's';
+
+    const sm = G.modes.storyMarker;
+    if (sm) {
+      $('objectiveDist').classList.remove('hidden');
+      $('objectiveDist').textContent = '🎯 ' + Math.floor(Math.sqrt(U.d2(p.pos.x, p.pos.z, sm.x, sm.z))) + ' m';
+    } else $('objectiveDist').classList.add('hidden');
+
+    UI.drawMinimap();
+  };
+})();

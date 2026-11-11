@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#070b18">
+<title>SHADOW CITY — Neon Legends</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="hud" class="hidden">
+  <div id="topLeft">
+    <div class="bar"><div id="hpFill"></div></div>
+    <div class="bar armor"><div id="apFill"></div></div>
+    <div id="money">$0</div>
+    <div id="level">Niv. 1</div>
+  </div>
+  <div id="stars"></div>
+  <div id="missionPanel"><div id="missionTitle"></div><div id="missionText"></div></div>
+  <canvas id="minimap" width="220" height="220"></canvas>
+  <div id="weaponBox"><span id="weaponName">Poings</span><span id="weaponAmmo"></span></div>
+  <div id="speedo" class="hidden">0 km/h</div>
+  <div id="crosshair" class="hidden"></div>
+  <div id="recDot" class="hidden">● REC</div>
+  <div id="subCounter" class="hidden"></div>
+  <div id="objectiveDist" class="hidden"></div>
+</div>
+
+<div id="touch" class="hidden">
+  <div id="joy"><div id="joyKnob"></div></div>
+  <div id="btns">
+    <button class="tbtn big" id="btnFire">🔥</button>
+    <button class="tbtn" id="btnAim">🎯</button>
+    <button class="tbtn" id="btnJump">⬆</button>
+    <button class="tbtn" id="btnEnter">🚗</button>
+    <button class="tbtn" id="btnWeapon">🔁</button>
+  </div>
+  <button class="tbtn phone" id="btnPhone">📱</button>
+</div>
+
+<div id="vignette"></div>
+<div id="toasts"></div>
+
+<div id="phone" class="hidden">
+  <div id="phoneBox">
+    <div id="phoneTabs"></div>
+    <div id="phoneContent"></div>
+    <button id="phoneClose">✕</button>
+  </div>
+</div>
+
+<div id="menu">
+  <div id="menuBox">
+    <h1>SHADOW<span>CITY</span></h1>
+    <p class="tagline">NEON LEGENDS — Open World 3D</p>
+    <div id="menuBtns"></div>
+    <p class="hint" id="menuHint"></p>
+  </div>
+</div>
+
+<div id="pause" class="hidden">
+  <div id="pauseBox">
+    <h2>PAUSE</h2>
+    <button data-p="resume">▶ Reprendre</button>
+    <button data-p="save">💾 Sauvegarder</button>
+    <button data-p="settings">⚙ Réglages</button>
+    <button data-p="quit">🏠 Menu principal</button>
+  </div>
+</div>
+
+<div id="bigMsg" class="hidden"></div>
+
+<script src="js/three.min.js"></script>
+<script src="js/core.js"></script>
+<script src="js/world.js"></script>
+<script src="js/characters.js"></script>
+<script src="js/vehicles.js"></script>
+<script src="js/combat.js"></script>
+<script src="js/economy.js"></script>
+<script src="js/modes.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
