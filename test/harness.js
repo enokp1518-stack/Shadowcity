@@ -281,4 +281,26 @@ frames(900);
 G.input.fire = false; G.input.keys['KeyW'] = false;
 console.log('npcs', G.npcs.length, 'cars', G.cars.length, 'fps-loop stable');
 
+console.log('--- t12: nouvelle partie (reset)');
+G.newGame();
+if (G.player.money !== 500) throw new Error('newGame money');
+if (G.yt.subs !== 0 || G.cartel.dirty !== 0) throw new Error('newGame yt/cartel');
+if (G.cartel.props.grow1.owned) throw new Error('newGame cartel props');
+if (G.eco.businesses.some(b => b.owned)) throw new Error('newGame businesses');
+if (G.world.districts.some(d => d.owned)) throw new Error('newGame districts');
+if (G.player.weapons.pistol) throw new Error('newGame weapons');
+frames(120);
+console.log('newGame OK — mission', G.modes.missions[G.modes.missionIdx].title);
+
+console.log('--- t13: arrestation (busted)');
+G.newGame();
+const cop = G.spawnCop(G.player.pos.x, G.player.pos.z);
+cop.obj.position.set(G.player.pos.x + 1, 0, G.player.pos.z);
+G.player.wanted = 2;
+const moneyBeforeBust = G.player.money;
+frames(200);
+if (G.player.wanted !== 0) throw new Error('busted failed, wanted=' + G.player.wanted);
+if (G.player.money >= moneyBeforeBust) throw new Error('busted amende manquante');
+console.log('busted OK — amende', moneyBeforeBust - G.player.money, 'wanted', G.player.wanted);
+
 console.log('\nALL TESTS PASSED');

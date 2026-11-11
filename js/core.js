@@ -123,7 +123,7 @@ G.input.pulse = function (k) { if (this.pressed[k]) { this.pressed[k] = false; r
   }
   hold('btnFire', () => { I.fire = true; G.sfx.ensure(); }, () => { I.fire = false; });
   hold('btnAim', () => { I.aim = true; }, () => { I.aim = false; });
-  hold('btnJump', () => { I.pressed.jump = true; });
+  hold('btnJump', () => { I.pressed.jump = true; I.jumpHeld = true; }, () => { I.jumpHeld = false; });
   hold('btnEnter', () => { I.pressed.action = true; });
   hold('btnWeapon', () => { I.pressed.weapon = true; });
   hold('btnPhone', () => { G.ui.togglePhone(); });
@@ -175,6 +175,23 @@ const SFX = {
   explode() { this.noise(0.6, 0.7, 300); this.tone(60, 0.5, 'sawtooth', 0.3, -30); },
   levelup() { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => this.tone(f, 0.15, 'sine', 0.2), i * 90)); },
   alarm() { this.tone(440, 0.3, 'square', 0.1, 220); },
+  siren(on) {
+    const c = this.ensure();
+    if (!c) return;
+    if (on && !this.sirOsc) {
+      this.sirOsc = c.createOscillator(); this.sirGain = c.createGain();
+      this.sirLfo = c.createOscillator(); const lfoGain = c.createGain();
+      this.sirOsc.type = 'sine'; this.sirOsc.frequency.value = 700;
+      this.sirLfo.frequency.value = 1.1; lfoGain.gain.value = 200;
+      this.sirLfo.connect(lfoGain); lfoGain.connect(this.sirOsc.frequency);
+      this.sirGain.gain.value = 0.02;
+      this.sirOsc.connect(this.sirGain); this.sirGain.connect(this.master);
+      this.sirOsc.start(); this.sirLfo.start();
+    } else if (!on && this.sirOsc) {
+      try { this.sirOsc.stop(); this.sirLfo.stop(); } catch (e) {}
+      this.sirOsc = null; this.sirLfo = null;
+    }
+  },
   engine(on) {
     const c = this.ensure();
     if (!c) return;
@@ -192,6 +209,33 @@ const SFX = {
   setEngine(speed) { if (this.engOsc) { this.engOsc.frequency.value = 55 + Math.abs(speed) * 3.2; this.engGain.gain.value = 0.035 + Math.min(0.04, Math.abs(speed) * 0.002); } }
 };
 G.sfx = SFX;
+
+G.newGame = function () {
+  const p = G.player;
+  p.money = 500; p.xp = 0; p.level = 1; p.maxHp = 100; p.hp = 100; p.armor = 0;
+  p.weapons = { fists: { owned: true, ammo: Infinity, reserve: Infinity } };
+  p.cur = 'fists'; p.wanted = 0; p.medkits = 3; p.inCar = null; p.reloadT = 0; p.fireT = 0;
+  const c0 = G.world.cellCenter(4, 5);
+  p.pos.set(c0.x, 0, c0.z + 20); p.vel.set(0, 0, 0);
+  for (const k in G.stats) G.stats[k] = 0;
+  G.yt.recording = false; G.yt.subs = 0; G.yt.views = 0; G.yt.videos = 0; G.yt.perks = [];
+  G.eco.petsOwned = []; G.eco.activePet = null; G.eco.refreshPet();
+  G.eco.artifactsOwned = []; G.eco.equipped = [];
+  G.eco.businesses.forEach(b => { b.owned = false; b.stored = 0; });
+  G.world.districts.forEach(d => d.owned = false);
+  G.cartel.reset();
+  G.modes.missionIdx = 0; G.modes.stageIdx = 0;
+  G.modes.war = { active: false, district: null, needed: 0, kills: 0 };
+  G.modes.survival = { active: false, wave: 0, alive: 0, breakT: 0 };
+  G.modes.race = { active: false };
+  G.modes.rift = { active: false };
+  G.modes.missions.forEach(m => m.stages.forEach(s => { s._entered = false; }));
+  for (let i = G.npcs.length - 1; i >= 0; i--) {
+    if (G.npcs[i].warTag || G.npcs[i].survival) { G.scene.remove(G.npcs[i].obj); G.npcs.splice(i, 1); }
+  }
+  G.state.lastCrime = -99;
+  G.state.kills = 0;
+};
 
 G.addXP = function (n) {
   const p = G.player; if (!p) return;
@@ -245,6 +289,8 @@ G.applySave = function (d) {
   if (d.yt) { G.yt.subs = d.yt.subs || 0; G.yt.views = d.yt.views || 0; G.yt.videos = d.yt.videos || 0; G.yt.perks = d.yt.perks || []; }
   G.cartel.deserialize(d.cartel);
   G.modes.missionIdx = d.missions || 0;
+  G.modes.stageIdx = 0;
+  G.modes.missions.forEach(m => m.stages.forEach(s => { s._entered = false; }));
   if (d.stats) Object.assign(G.stats, d.stats);
   if (d.settings) Object.assign(G.settings, d.settings);
   G.state.time = d.time || 9;

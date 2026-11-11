@@ -34,7 +34,8 @@ Sur mobile : « Ajouter à l'écran d'accueil » pour un rendu plein écran type
 ## 🗺️ Le monde
 
 - **5 quartiers** avec gangs à conquérir : Downtown (Les Fantômes), Les Docks (Crimson), Zone Industrielle (Iron Wolves), Green Heights (Les Vipères), Neon Strip (Neon Kings).
-- Trafic, piétons, police avec niveau de recherche (5 étoiles), jour/nuit, étoiles, néons.
+- Trafic, piétons, police avec niveau de recherche (5 étoiles) : sème-la ou te fais **arrêter** (amende) — sirène et gyrophares quand elle est sur toi.
+- **Cycle jour/nuit complet** : soleil et lune visibles, nuages animés, fenêtres et néons qui s'allument la nuit, phares de voiture de nuit.
 - Marqueurs colorés : armurerie, animalerie, dealer d'artefacts, arène, rift, courses, business.
 
 ## 🔫 Armures… euh, arsenal
@@ -78,7 +79,9 @@ Histoire (10 contrats) • Free Roam • Guerre des gangs (capture de territoire
 
 - Résolution adaptative automatique (si les chutes de FPS, la résolution baisse) + 3 presets qualité jusqu'au rendu 4K (DPR ×3).
 - Brouillard de distance réglé par preset, ombres désactivables, audio synthétisé WebAudio (zéro asset à charger).
-- Sauvegarde automatique locale (localStorage) à chaque contrat réussi.
+- **Sauvegarde automatique** (localStorage) : à chaque contrat réussi, toutes les 2 minutes, et quand l'app passe en arrière-plan.
+- **Nouvelle partie propre** : « Nouvelle partie » réinitialise tout (argent, armes, business, cartel, abonnés, territoires).
+- Testé par un harnais Node de 13 scénarios joués réellement (`node test/harness.js`).
 
 ## 🧪 Tests
 

@@ -71,7 +71,7 @@
     const p = G.player;
     if (p.inCar) { G.enterCar(); return; }
     for (const pr of G.cartel.PROPERTIES) {
-      if (U.d2(p.pos.x, p.pos.z, pr.x, pr.z) < 100) { G.ui.openPhone('cartel'); return; }
+      if (U.d2(p.pos.x, p.pos.z, pr.x, pr.z) < 64) { G.ui.openPhone('cartel'); return; }
     }
     const sp = nearestSpecial();
     if (sp) {
@@ -121,7 +121,7 @@
     } else raceRing.visible = false;
   }
 
-  let fpsAcc = 0, fpsN = 0, adaptT = 0;
+  let fpsAcc = 0, fpsN = 0, adaptT = 0, autosaveT = 0;
 
   function adaptiveRes(dt) {
     fpsAcc += dt; fpsN++;
@@ -157,6 +157,8 @@
       updateHelpers(dt);
       G.ui.updateHUD();
       adaptiveRes(dt);
+      autosaveT += dt;
+      if (autosaveT > 120) { autosaveT = 0; G.save(true); }
     } else if (G.state.screen === 'play') {
       G.world.updateEnvironment(dt * 0.2);
     }
@@ -188,7 +190,7 @@
   }
 
   function startGame(mode, save) {
-    if (!save) G.wipeSave();
+    if (!save) { G.wipeSave(); G.newGame(); }
     G.state.screen = 'play';
     G.state.mode = mode;
     $('menu').classList.add('hidden');
@@ -207,7 +209,11 @@
     G.renderer.setSize(innerWidth, innerHeight);
   });
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && G.state.screen === 'play') G.state.paused = true, $('pause').classList.remove('hidden');
+    if (document.hidden && G.state.screen === 'play') {
+      G.save(true);
+      G.state.paused = true;
+      $('pause').classList.remove('hidden');
+    }
   });
 
   initRenderer();

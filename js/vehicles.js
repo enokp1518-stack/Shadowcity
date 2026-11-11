@@ -98,6 +98,7 @@
       p.inCar = null; car.driver = null;
       car.speed *= 0.2;
       G.sfx.engine(false);
+      G.input.pressed.jump = false;
       return;
     }
     const car = V.nearestCar(p.pos.x, p.pos.z, 3.8);
@@ -109,6 +110,7 @@
     p.inCar = car;
     car.driver = 'player';
     car.ai = null;
+    G.input.pressed.jump = false;
     G.stats.carsEntered++;
     G.sfx.ensure();
     G.sfx.engine(true);

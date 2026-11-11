@@ -101,7 +101,7 @@
       pot = C.props[pid].pots.find(pp => !pp.seed);
       if (pot) break;
     }
-    if (!pot) { G.ui.toast('Aucun pot libre !', 'warn'); G.eco.earn(s.price, true); G.sfx.deny(); return; }
+    if (!pot) { G.ui.toast('Aucun pot libre !', 'warn'); G.player.money += s.price; G.sfx.deny(); return; }
     pot.seed = id; pot.progress = 0; pot.water = 1; pot.quality = 1;
     G.ui.toast(s.name + ' plantée !', 'money');
     G.sfx.buy();
@@ -401,6 +401,16 @@
         C.customers.push(n);
         assigned++;
       }
+    }
+  };
+
+  C.reset = function () {
+    C.dirty = 0; C.heat = 0; C.rep = 0; C.reagent = 0;
+    C.dealers = []; C.contract = null; C.convoy = null; C.laundered = 0;
+    for (const id in C.products) { C.products[id].qty = 0; C.products[id].quality = 1; }
+    for (const pid in C.props) { C.props[pid].owned = false; C.props[pid].pots = []; C.props[pid].batch = null; }
+    for (const key in C.plantGroups) {
+      for (const plant of C.plantGroups[key]) { plant.visible = false; plant.scale.setScalar(0.01); }
     }
   };
 

@@ -191,11 +191,12 @@
     }
     if (G.yt.subs > 0) G.player.money += G.yt.subs * 0.002 / 60 * dt * b.money;
 
-    if (E.petObj && E.activePet && !G.player.inCar) {
+    if (E.petObj && E.activePet) {
       const t = G.player.pos;
+      const faceYaw = G.player.inCar ? G.player.inCar.yaw : G.player.obj.rotation.y;
       const target = E.activePet === 'falcon'
         ? { x: t.x + Math.cos(G.state.time * 40) * 3, z: t.z + Math.sin(G.state.time * 40) * 3, y: 5 }
-        : { x: t.x - Math.sin(G.player.obj.rotation.y) * 1.8, z: t.z - Math.cos(G.player.obj.rotation.y) * 1.8, y: 0 };
+        : { x: t.x - Math.sin(faceYaw) * 1.8, z: t.z - Math.cos(faceYaw) * 1.8, y: 0 };
       E.petObj.position.x = U.lerp(E.petObj.position.x, target.x, dt * 4);
       E.petObj.position.z = U.lerp(E.petObj.position.z, target.z, dt * 4);
       E.petObj.position.y = U.lerp(E.petObj.position.y, target.y || 0, dt * 4);

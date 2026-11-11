@@ -365,6 +365,24 @@
     buildStreetlights();
     buildStars();
 
+    W.sunDisc = new THREE.Mesh(new THREE.SphereGeometry(22, 16, 12),
+      new THREE.MeshBasicMaterial({ color: 0xffdf8a, fog: false }));
+    G.scene.add(W.sunDisc);
+    W.moonDisc = new THREE.Mesh(new THREE.SphereGeometry(13, 16, 12),
+      new THREE.MeshBasicMaterial({ color: 0xdfe8ff, fog: false }));
+    G.scene.add(W.moonDisc);
+    W.clouds = [];
+    const cGeo = new THREE.BoxGeometry(46, 4, 26);
+    const cMat = new THREE.MeshLambertMaterial({ color: 0xffffff, transparent: true, opacity: 0.5 });
+    W.cloudMat = cMat;
+    for (let k = 0; k < 14; k++) {
+      const cl = new THREE.Mesh(cGeo, cMat);
+      cl.position.set(U.rand(-700, 700), U.rand(110, 170), U.rand(-700, 700));
+      cl.userData.speed = U.rand(1.5, 4);
+      G.scene.add(cl);
+      W.clouds.push(cl);
+    }
+
     const L = W.specialLocations;
     const put = (i, j, dx, dz) => { const c = W.cellCenter(i, j); return { x: c.x + dx, z: c.z + dz }; };
     const gunPos = put(4, 4, -16, -16);
@@ -418,7 +436,7 @@
 
     const dayF = U.clamp(elev * 2.2, 0, 1);
     tmpC.copy(nightSky).lerp(daySky, dayF);
-    if (elev < 0.25 && elev > -0.1) tmpC2.copy(duskSky), tmpC.lerp(tmpC2, (0.25 - Math.abs(elev - 0.08)) * 2);
+    if (elev < 0.25 && elev > -0.1) tmpC2.copy(duskSky), tmpC.lerp(tmpC2, U.clamp((0.25 - Math.abs(elev - 0.08)) * 2, 0, 1));
     skyColor.copy(tmpC);
     fog.color.copy(tmpC);
 
@@ -428,5 +446,19 @@
       else m.emissiveIntensity = nf * 0.9;
     }
     if (stars) stars.material.opacity = nf * 0.9;
+
+    if (W.sunDisc) {
+      W.sunDisc.position.copy(sun.position).normalize().multiplyScalar(1300);
+      W.sunDisc.visible = elev > -0.12;
+      W.moonDisc.position.set(-sun.position.x, -sun.position.y, -sun.position.z).normalize().multiplyScalar(1300);
+      W.moonDisc.visible = elev < 0.12;
+    }
+    if (W.clouds) {
+      W.cloudMat.opacity = 0.5 - nf * 0.32;
+      for (const cl of W.clouds) {
+        cl.position.x += cl.userData.speed * dt;
+        if (cl.position.x > 760) cl.position.x = -760;
+      }
+    }
   };
 })();

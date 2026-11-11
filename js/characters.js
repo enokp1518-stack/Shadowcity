@@ -333,6 +333,10 @@
         if (wanted > 0) {
           if (pd > 10) moveNPC(n, p.pos.x, p.pos.z, n.speed, dt);
           else if (n.shootCd <= 0) { n.shootCd = U.rand(0.7, 1.3); npcShoot(n); }
+          if (pd < 2.4 && !p.inCar) {
+            n.arrestT = (n.arrestT || 0) + dt;
+            if (n.arrestT > 1.5) { n.arrestT = 0; G.combat.busted(); }
+          } else n.arrestT = 0;
         } else {
           moveNPC(n, n.home.x, n.home.z, 3, dt);
           if (pd > 100) { G.scene.remove(n.obj); G.npcs.splice(i, 1); continue; }

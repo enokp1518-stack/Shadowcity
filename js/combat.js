@@ -236,11 +236,43 @@
     if (p.hp <= 0) C.wasted();
   };
 
+  C.cleanupEventNPCs = function () {
+    for (let i = G.npcs.length - 1; i >= 0; i--) {
+      const n = G.npcs[i];
+      if (n.warTag || n.survival) { G.scene.remove(n.obj); G.npcs.splice(i, 1); }
+    }
+  };
+
+  C.busted = function () {
+    if (G.state.wasted) return;
+    const p = G.player;
+    G.state.wasted = true;
+    G.ui.bigMsg('ATTRAPÉ 🚔', false);
+    G.sfx.alarm();
+    C.cleanupEventNPCs();
+    if (G.modes.survival.active) G.modes.survival.active = false;
+    if (G.modes.race.active) G.modes.race.active = false;
+    if (G.modes.war.active) G.modes.war.active = false;
+    setTimeout(() => {
+      const loss = Math.min(2000, Math.floor(p.money * 0.15));
+      p.money -= loss;
+      p.wanted = 0;
+      p.hp = p.maxHp * 0.8;
+      if (p.inCar) { p.inCar.driver = null; p.inCar = null; G.sfx.engine(false); }
+      const c = G.world.cellCenter(4, 4);
+      p.pos.set(c.x + 18, 0, c.z + 18);
+      G.state.wasted = false;
+      G.ui.hideBig();
+      G.ui.toast('Commissariat central : ' + U.fmt(loss) + " d'amende");
+    }, 2200);
+  };
+
   C.wasted = function () {
     const p = G.player;
     G.state.wasted = true;
     p.hp = 0;
     G.ui.bigMsg('ÉLIMINÉ', false);
+    C.cleanupEventNPCs();
     if (G.modes.survival.active) G.modes.survival.active = false;
     if (G.modes.race.active) G.modes.race.active = false;
     if (G.modes.war.active) G.modes.war.active = false;
@@ -297,6 +329,17 @@
         G.state.lastCrime = now;
         if (p.wanted === 0) G.ui.toast('Vous avez semé la police 😎');
       }
+    }
+
+    let copNear = false;
+    for (const n of G.npcs) {
+      if (n.type === 'cop' && !n.dead &&
+        U.d2(n.obj.position.x, n.obj.position.z, p.pos.x, p.pos.z) < 3600) { copNear = true; break; }
+    }
+    const sirenOn = p.wanted > 0 && copNear;
+    if (sirenOn !== G.state.sirenOn) {
+      G.state.sirenOn = sirenOn;
+      G.sfx.siren(sirenOn);
     }
   };
 })();
