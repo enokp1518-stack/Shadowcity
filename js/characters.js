@@ -305,6 +305,20 @@
       bp.position.set(0, 1.2, -0.3);
       n.obj.add(bp);
     }
+    const headP = n.obj.children.find(ch => ch.position.y === 1.82);
+    if (headP) {
+      if (Math.random() < 0.2) {
+        const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.32, 0.1, 10),
+          new THREE.MeshLambertMaterial({ color: U.pick([0x22262e, 0x8b5a2b, 0xd9480f, 0xf2f5f8]) }));
+        hat.position.y = 0.26;
+        headP.add(hat);
+      } else if (Math.random() < 0.3) {
+        const sh = new THREE.Mesh(new THREE.BoxGeometry(0.34, 0.09, 0.05),
+          new THREE.MeshBasicMaterial({ color: 0x0c0e12 }));
+        sh.position.set(0, 0.05, 0.23);
+        headP.add(sh);
+      }
+    }
     return n;
   };
 
