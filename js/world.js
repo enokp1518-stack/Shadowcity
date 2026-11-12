@@ -208,10 +208,44 @@
     return t;
   }
 
+  function pavingTex() {
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const x = c.getContext('2d');
+    x.fillStyle = '#3a4048'; x.fillRect(0, 0, 256, 256);
+    x.strokeStyle = 'rgba(0,0,0,0.35)'; x.lineWidth = 2;
+    for (let i = 0; i <= 256; i += 32) {
+      x.beginPath(); x.moveTo(i, 0); x.lineTo(i, 256); x.stroke();
+      x.beginPath(); x.moveTo(0, i); x.lineTo(256, i); x.stroke();
+    }
+    x.fillStyle = 'rgba(255,255,255,0.06)';
+    for (let k = 0; k < 500; k++) x.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+    x.fillStyle = 'rgba(0,0,0,0.12)';
+    for (let k = 0; k < 300; k++) x.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(8, 8);
+    return t;
+  }
+
+  function grassTex() {
+    const c = document.createElement('canvas'); c.width = c.height = 256;
+    const x = c.getContext('2d');
+    x.fillStyle = '#3d5a34'; x.fillRect(0, 0, 256, 256);
+    for (let k = 0; k < 1400; k++) {
+      x.fillStyle = Math.random() < 0.5 ? 'rgba(90,150,60,0.5)' : 'rgba(40,80,40,0.5)';
+      x.fillRect(Math.random() * 256, Math.random() * 256, 2, 4);
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(10, 10);
+    return t;
+  }
+
   function buildMaterials() {
     W.mats = {};
     W.mats.asphalt = new THREE.MeshLambertMaterial({ color: 0x1c2026 });
-    W.mats.sidewalk = new THREE.MeshLambertMaterial({ color: 0x3a4048 });
+    W.mats.sidewalk = new THREE.MeshLambertMaterial({ map: pavingTex() });
+    W.mats.grass = new THREE.MeshLambertMaterial({ map: grassTex() });
     W.mats.dark = new THREE.MeshLambertMaterial({ color: 0x22262e });
     W.mats.metal = new THREE.MeshLambertMaterial({ color: 0x5a6472 });
     W.mats.trunk = new THREE.MeshLambertMaterial({ color: 0x4a3626 });
@@ -255,6 +289,22 @@
       x.beginPath(); x.moveTo(0, p); x.lineTo(res, p); x.stroke();
     }
     x.setLineDash([]);
+    x.fillStyle = 'rgba(255,255,255,0.05)';
+    for (let k = 0; k < 9000; k++) x.fillRect(Math.random() * res, Math.random() * res, 2, 2);
+    x.fillStyle = 'rgba(0,0,0,0.16)';
+    for (let k = 0; k < 6000; k++) x.fillRect(Math.random() * res, Math.random() * res, 2, 2);
+    x.fillStyle = 'rgba(0,0,0,0.3)';
+    for (let k = 0; k < 45; k++) {
+      x.beginPath();
+      x.ellipse(Math.random() * res, Math.random() * res, 8 + Math.random() * 20, 5 + Math.random() * 10, Math.random() * 3, 0, Math.PI * 2);
+      x.fill();
+    }
+    x.fillStyle = '#1a1e24';
+    for (let k = 0; k < 30; k++) {
+      x.beginPath();
+      x.arc(Math.random() * res, Math.random() * res, 2.5 * px, 0, Math.PI * 2);
+      x.fill();
+    }
     x.fillStyle = 'rgba(255,255,255,0.35)';
     for (let i = 0; i <= W.GRID; i++) for (let j = 0; j <= W.GRID; j++) {
       const ix = W.roadCoord(i), iz = W.roadCoord(j);
@@ -263,7 +313,7 @@
       }
     }
     const tex = new THREE.CanvasTexture(c);
-    tex.anisotropy = 4;
+    tex.anisotropy = 8;
     const ground = new THREE.Mesh(new THREE.PlaneGeometry(W.SPAN, W.SPAN), new THREE.MeshLambertMaterial({ map: tex }));
     ground.rotation.x = -Math.PI / 2;
     G.scene.add(ground);
@@ -297,7 +347,8 @@
   function buildBlock(i, j) {
     const cc = W.cellCenter(i, j);
     const dist = W.districtOf(i, j);
-    const sw = new THREE.Mesh(new THREE.BoxGeometry(W.BLOCK, 0.3, W.BLOCK), W.mats.sidewalk);
+    const slabMat = dist.id === 'residential' ? W.mats.grass : W.mats.sidewalk;
+    const sw = new THREE.Mesh(new THREE.BoxGeometry(W.BLOCK, 0.3, W.BLOCK), slabMat);
     sw.position.set(cc.x, 0.15, cc.z);
     sw.receiveShadow = true;
     G.scene.add(sw);
@@ -389,6 +440,80 @@
   }
 
   W.rain = { active: false, next: U.rand(90, 240) };
+  function buildProps() {
+    const trunkGeo = new THREE.CylinderGeometry(0.18, 0.26, 2.2, 6);
+    const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5a3d28 });
+    const leafGeo = new THREE.ConeGeometry(1.5, 2.6, 8);
+    const leafMatA = new THREE.MeshLambertMaterial({ color: 0x2f6b33 });
+    const leafMatB = new THREE.MeshLambertMaterial({ color: 0x3d7a3a });
+    const crateGeo = new THREE.BoxGeometry(1.4, 1.4, 1.4);
+    const crateMat = new THREE.MeshLambertMaterial({ color: 0x8a6a42 });
+    const barrelGeo = new THREE.CylinderGeometry(0.5, 0.5, 1.2, 10);
+    const barrelMat = new THREE.MeshLambertMaterial({ color: 0x9a3b2e });
+    const binGeo = new THREE.CylinderGeometry(0.4, 0.34, 1, 8);
+    const binMat = new THREE.MeshLambertMaterial({ color: 0x2e4a2e });
+    const hydGeo = new THREE.CylinderGeometry(0.16, 0.2, 0.7, 8);
+    const hydMat = new THREE.MeshLambertMaterial({ color: 0xd22c2c });
+    const benchGeo = new THREE.BoxGeometry(1.8, 0.12, 0.5);
+    const benchMat = new THREE.MeshLambertMaterial({ color: 0x6a4a2f });
+    const legGeo = new THREE.BoxGeometry(0.12, 0.45, 0.5);
+    for (let i = 0; i < W.GRID; i++) for (let j = 0; j < W.GRID; j++) {
+      if (Math.random() > 0.45) continue;
+      const cc = W.cellCenter(i, j);
+      const dist = W.districtOf(i, j);
+      const ox = U.rand(-W.BLOCK / 2 + 4, W.BLOCK / 2 - 4);
+      const oz = U.rand(-W.BLOCK / 2 + 4, W.BLOCK / 2 - 4);
+      const px2 = cc.x + ox, pz2 = cc.z + oz;
+      if (dist.id === 'residential') {
+        const tr = new THREE.Mesh(trunkGeo, trunkMat);
+        tr.position.set(px2, 1.1, pz2); tr.castShadow = true;
+        G.scene.add(tr);
+        const lf = new THREE.Mesh(leafGeo, Math.random() < 0.5 ? leafMatA : leafMatB);
+        lf.position.set(px2, 3.2, pz2); lf.castShadow = true;
+        G.scene.add(lf);
+        W.addCollider(px2 - 0.3, pz2 - 0.3, px2 + 0.3, pz2 + 0.3, 2);
+      } else if (dist.id === 'industrial' || dist.id === 'docks') {
+        const m = new THREE.Mesh(Math.random() < 0.5 ? crateGeo : barrelGeo, Math.random() < 0.5 ? crateMat : barrelMat);
+        m.position.set(px2, 0.7, pz2); m.castShadow = true; m.rotation.y = U.rand(0, 3);
+        G.scene.add(m);
+        W.addCollider(px2 - 0.5, pz2 - 0.5, px2 + 0.5, pz2 + 0.5, 1.4);
+      } else {
+        const r = Math.random();
+        if (r < 0.4) {
+          const b = new THREE.Mesh(binGeo, binMat);
+          b.position.set(px2, 0.5, pz2); b.castShadow = true;
+          G.scene.add(b);
+        } else if (r < 0.7) {
+          const h = new THREE.Mesh(hydGeo, hydMat);
+          h.position.set(px2, 0.35, pz2); h.castShadow = true;
+          G.scene.add(h);
+        } else {
+          const b = new THREE.Mesh(benchGeo, benchMat);
+          b.position.set(px2, 0.5, pz2); b.castShadow = true;
+          G.scene.add(b);
+          const l1 = new THREE.Mesh(legGeo, benchMat); l1.position.set(px2 - 0.7, 0.25, pz2);
+          const l2 = new THREE.Mesh(legGeo, benchMat); l2.position.set(px2 + 0.7, 0.25, pz2);
+          G.scene.add(l1); G.scene.add(l2);
+        }
+      }
+    }
+  }
+
+  function buildSunGlow() {
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 128;
+      const x = c.getContext('2d');
+      const grd = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+      grd.addColorStop(0, 'rgba(255,230,160,0.9)');
+      grd.addColorStop(0.4, 'rgba(255,180,90,0.35)');
+      grd.addColorStop(1, 'rgba(255,150,60,0)');
+      x.fillStyle = grd; x.fillRect(0, 0, 128, 128);
+      W.sunGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, fog: false }));
+      W.sunGlow.scale.set(220, 220, 1);
+      G.scene.add(W.sunGlow);
+    } catch (e) { W.sunGlow = null; }
+  }
+
   W.fogFar = 420;
   let rainPts = null, rainGeo = null;
 
@@ -425,6 +550,8 @@
     buildGround();
     for (let i = 0; i < W.GRID; i++) for (let j = 0; j < W.GRID; j++) buildBlock(i, j);
     buildStreetlights();
+    buildProps();
+    buildSunGlow();
     buildStars();
     buildRain();
 
@@ -540,6 +667,11 @@
       W.sunDisc.visible = elev > -0.12;
       W.moonDisc.position.set(-sun.position.x, -sun.position.y, -sun.position.z).normalize().multiplyScalar(1300);
       W.moonDisc.visible = elev < 0.12;
+    }
+    if (W.sunGlow) {
+      W.sunGlow.position.copy(sun.position).normalize().multiplyScalar(1250);
+      W.sunGlow.material.opacity = Math.max(0.08, Math.max(0, elev) * 0.9);
+      W.sunGlow.visible = elev > -0.1;
     }
     if (W.clouds) {
       W.cloudMat.opacity = (W.rain.active ? 0.85 : 0.5) - nf * 0.32;

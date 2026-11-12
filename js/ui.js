@@ -314,6 +314,7 @@
       let html = '<div class="secTitle">Graphismes</div>';
       html += row('🖥️ Qualité', 'Perf (fluide) • HD • Ultra 4K (mobiles puissants)', { perf: 'Perf', hd: 'HD', ultra: 'Ultra 4K' }[s.quality], 'quality', { cls: 'gold' });
       html += row('🌗 Ombres', 'Ombres dynamiques (Plus beau, plus gourmand)', s.shadows ? 'ON' : 'OFF', 'shadows', { cls: s.shadows ? 'green' : '' });
+      html += row('📽️ SC-Upscale (DLSS)', 'Rendu intelligent : résolution interne adaptative + netteté/contraste améliorés — fluide et beau', s.upscale ? 'ON' : 'OFF', 'upscale', { cls: s.upscale ? 'green' : '' });
       html += '<div class="secTitle">Audio & contrôles</div>';
       html += row('🔊 Son', 'Effets sonores', s.sound ? 'ON' : 'OFF', 'sound', { cls: s.sound ? 'green' : '' });
       html += row('🖱️ Sensibilité', 'Caméra / visée : ' + s.sens.toFixed(1) + 'x', '+ / −', 'sens');
@@ -447,6 +448,7 @@
         break;
       }
       case 'shadows': G.settings.shadows = !G.settings.shadows; G.ui.applySettings(); break;
+      case 'upscale': G.settings.upscale = !G.settings.upscale; G.ui.applySettings(); break;
       case 'sound': G.settings.sound = !G.settings.sound; if (!G.settings.sound) G.sfx.engine(false); break;
       case 'sens': {
         const steps = [0.5, 0.75, 1, 1.5, 2];
@@ -495,7 +497,9 @@
     let base = 1;
     if (s.quality === 'hd') base = Math.min(dpr, 1.6);
     if (s.quality === 'ultra') base = Math.min(dpr, 3);
-    r.setPixelRatio(base * G.state.resScale);
+    const up = s.upscale && s.quality !== 'perf';
+    r.setPixelRatio(base * G.state.resScale * (up ? 0.7 : 1));
+    if (r.domElement && r.domElement.style) r.domElement.style.filter = up ? 'contrast(1.06) saturate(1.12)' : 'none';
     r.shadowMap.enabled = s.shadows;
     if (G.world && G.world.sun) {
       G.world.sun.castShadow = s.shadows;

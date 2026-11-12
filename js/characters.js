@@ -1,14 +1,88 @@
 'use strict';
 (function () {
 
-  G.makeHumanoid = function (color, scale) {
+  const SKINS = [0xf2c99b, 0xd9a066, 0xb07b4f, 0x8a5a3b, 0xf5d7b0, 0xc98e63];
+  const HAIRS = [0x1b1b1b, 0x3d2b1f, 0x6b4423, 0x8a8a8a, 0xd9b34a, 0x7a3b2e, 0x2f4a8a];
+  const faceCache = {};
+  const hexCss = (h) => '#' + h.toString(16).padStart(6, '0');
+
+  G.faceTex = function (mood, open, skin, hair) {
+    const key = mood + '|' + (open ? 1 : 0) + '|' + skin + '|' + hair;
+    if (faceCache[key]) return faceCache[key];
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const x = c.getContext('2d');
+    x.fillStyle = hexCss(skin); x.fillRect(0, 0, 128, 128);
+    if (hair !== null) {
+      x.fillStyle = hexCss(hair);
+      x.fillRect(0, 0, 128, 20);
+      x.fillRect(0, 0, 9, 62); x.fillRect(119, 0, 9, 62);
+    }
+    if (mood === 'shady') {
+      x.fillStyle = '#0a0a0c'; x.fillRect(13, 45, 102, 23);
+      x.fillStyle = 'rgba(255,255,255,0.28)'; x.fillRect(20, 49, 26, 5);
+    } else {
+      const big = mood === 'scared';
+      const ew = big ? 27 : 20, eh = big ? 21 : 14;
+      x.fillStyle = '#ffffff';
+      x.fillRect(28 - ew / 2, 54 - eh / 2, ew, eh);
+      x.fillRect(100 - ew / 2, 54 - eh / 2, ew, eh);
+      x.fillStyle = '#14161c';
+      const pw = mood === 'angry' ? 5 : 7;
+      x.fillRect(28 - pw / 2, 54 - pw / 2, pw, pw + 3);
+      x.fillRect(100 - pw / 2, 54 - pw / 2, pw, pw + 3);
+      if (hair !== null) {
+        x.fillStyle = hexCss(hair);
+        if (mood === 'angry') {
+          x.save(); x.translate(28, 40); x.rotate(0.38); x.fillRect(-15, -3, 30, 6); x.restore();
+          x.save(); x.translate(100, 40); x.rotate(-0.38); x.fillRect(-15, -3, 30, 6); x.restore();
+        } else if (mood === 'scared') {
+          x.fillRect(14, 29, 28, 5); x.fillRect(86, 29, 28, 5);
+        } else {
+          x.fillRect(16, 37, 24, 5); x.fillRect(88, 37, 24, 5);
+        }
+      }
+    }
+    if (open) {
+      x.fillStyle = '#5a2d24';
+      x.beginPath(); x.ellipse(64, 94, 14, 11, 0, 0, Math.PI * 2); x.fill();
+      x.fillStyle = '#8a4646'; x.fillRect(58, 99, 12, 4);
+    } else if (mood === 'happy') {
+      x.strokeStyle = '#5a2d24'; x.lineWidth = 5;
+      x.beginPath(); x.arc(64, 86, 15, 0.12 * Math.PI, 0.88 * Math.PI); x.stroke();
+    } else if (mood === 'angry') {
+      x.fillStyle = '#5a2d24'; x.fillRect(47, 93, 34, 6);
+      x.fillStyle = '#ffffff';
+      for (let k = 0; k < 4; k++) x.fillRect(50 + k * 8, 93, 5, 4);
+    } else {
+      x.fillStyle = '#5a2d24'; x.fillRect(50, 94, 28, 4);
+    }
+    const t = new THREE.CanvasTexture(c);
+    faceCache[key] = t;
+    return t;
+  };
+
+  G.makeHumanoid = function (color, scale, opts) {
+    const o = opts || {};
+    const skin = o.skin || U.pick(SKINS);
+    const hair = o.hair !== undefined ? o.hair : U.pick(HAIRS);
+    const mood = o.mood || 'neutral';
     const g = new THREE.Group();
     const mat = new THREE.MeshLambertMaterial({ color });
-    const skin = new THREE.MeshLambertMaterial({ color: 0xd9a066 });
+    const skinMat = new THREE.MeshLambertMaterial({ color: skin });
     const body = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.85, 0.4), mat);
     body.position.y = 1.15; body.castShadow = true;
-    const head = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.42), skin);
+    const head = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.42, 0.42), skinMat);
     head.position.y = 1.82; head.castShadow = true;
+    const faceMat = new THREE.MeshLambertMaterial({ map: G.faceTex(mood, false, skin, hair) });
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(0.42, 0.42), faceMat);
+    face.position.z = 0.216;
+    head.add(face);
+    if (hair !== null) {
+      const hm = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.13, 0.46), new THREE.MeshLambertMaterial({ color: hair }));
+      hm.position.y = 0.24;
+      head.add(hm);
+    }
     function limb(w, len, px, py, matl) {
       const pivot = new THREE.Group();
       pivot.position.set(px, py, 0);
@@ -26,7 +100,22 @@
     if (scale) g.scale.setScalar(scale);
     g.userData.anim = { lArm, rArm, lLeg, rLeg, head, body };
     g.userData.mat = mat;
+    g.userData.face = { mat: faceMat, mood, open: false, skin, hair };
     return g;
+  };
+
+  G.setFace = function (h, mood) {
+    const f = h.userData.face;
+    if (!f || f.mood === mood) return;
+    f.mood = mood;
+    f.mat.map = G.faceTex(mood, f.open, f.skin, f.hair);
+  };
+
+  G.setFaceOpen = function (h, open) {
+    const f = h.userData.face;
+    if (!f || f.open === open) return;
+    f.open = open;
+    f.mat.map = G.faceTex(f.mood, open, f.skin, f.hair);
   };
 
   function animWalk(h, moving, t, run) {
@@ -37,6 +126,8 @@
     a.rLeg.rotation.x = -s * amp;
     a.lArm.rotation.x = -s * amp * 0.8;
     a.rArm.rotation.x = s * amp * 0.8;
+    a.body.position.y = 1.15 + (moving ? Math.abs(s) * 0.05 : 0);
+    a.body.scale.y = moving ? 1 : 1 + Math.sin(t * 2.2) * 0.012;
   }
 
   function initPlayer() {
@@ -131,8 +222,8 @@
 
   const GANG_COLORS = { Crimson: 0xd22c2c, Wolves: 0x9a7a4f, Vipers: 0x2f9e44, Kings: 0xae3ec9, Ghosts: 0xdfe6f0, COPS: 0x2f6bff };
 
-  function baseNPC(type, x, z, color) {
-    const obj = G.makeHumanoid(color);
+  function baseNPC(type, x, z, color, opts) {
+    const obj = G.makeHumanoid(color, 0, opts);
     obj.position.set(x, 0, z);
     G.scene.add(obj);
     const npc = {
@@ -147,14 +238,14 @@
 
   G.spawnPed = function () {
     const pt = G.world.randRoadPoint();
-    const n = baseNPC('ped', pt.x, pt.z, U.pick([0xcc8866, 0x6688cc, 0x88bb66, 0xbb6688, 0x999999, 0xddaa55]));
+    const n = baseNPC('ped', pt.x, pt.z, U.pick([0xcc8866, 0x6688cc, 0x88bb66, 0xbb6688, 0x999999, 0xddaa55]), { mood: U.pick(['neutral', 'happy']) });
     n.hp = n.maxHp = 30;
     return n;
   };
 
   G.spawnGang = function (districtId, nearX, nearZ, warTag) {
     const d = G.world.districts.find(x => x.id === districtId);
-    const n = baseNPC('gang', nearX + U.rand(-14, 14), nearZ + U.rand(-14, 14), GANG_COLORS[d.gang]);
+    const n = baseNPC('gang', nearX + U.rand(-14, 14), nearZ + U.rand(-14, 14), GANG_COLORS[d.gang], { mood: 'shady' });
     n.hp = n.maxHp = 55 + G.player.level * 6;
     n.speed = 4.2; n.gang = d.gang; n.district = districtId; n.warTag = !!warTag;
     n.dmg = 6 + G.player.level;
@@ -166,7 +257,7 @@
     let x = U.clamp(nearX + Math.cos(ang) * r, G.world.ORIGIN + 8, -G.world.ORIGIN - 8);
     let z = U.clamp(nearZ + Math.sin(ang) * r, G.world.ORIGIN + 8, -G.world.ORIGIN - 8);
     const swat = G.player.wanted >= 4;
-    const n = baseNPC('cop', x, z, swat ? 0x1a2a5a : GANG_COLORS.COPS);
+    const n = baseNPC('cop', x, z, swat ? 0x1a2a5a : GANG_COLORS.COPS, { mood: 'neutral', hair: 0x1b1b1b });
     n.hp = n.maxHp = swat ? 150 : 80;
     n.speed = swat ? 6.2 : 5.5;
     n.dmg = swat ? 13 : 8;
@@ -184,7 +275,7 @@
 
   G.spawnCreature = function (kind, x, z, hpMul) {
     const def = CREATURES[kind];
-    const obj = G.makeHumanoid(def.color, def.scale);
+    const obj = G.makeHumanoid(def.color, def.scale, { mood: 'angry', hair: null, skin: def.color });
     obj.position.set(x, 0, z);
     G.scene.add(obj);
     const n = {
@@ -197,7 +288,7 @@
   };
 
   G.spawnBoss = function (x, z) {
-    const obj = G.makeHumanoid(0x1a0a2a, 3.2);
+    const obj = G.makeHumanoid(0x1a0a2a, 3.2, { mood: 'angry', hair: null, skin: 0x1a0a2a });
     obj.position.set(x, 0, z);
     G.scene.add(obj);
     const n = {
@@ -319,6 +410,17 @@
         if (n.hp <= 0) { G.damageNPC(n, 1, false); continue; }
       }
       n.frozen = G.eco.equipped.includes('frost') && pd < 12;
+
+      if (n.type === 'cop') {
+        const m = wanted > 0 ? 'angry' : 'neutral';
+        if (n.faceMood !== m) { n.faceMood = m; G.setFace(n.obj, m); }
+      } else if (n.type === 'ped') {
+        const m = n.state === 'flee' ? 'scared' : (n.faceMood || 'neutral');
+        if (n.faceMood !== m) { n.faceMood = m; G.setFace(n.obj, m); }
+      } else if (n.type === 'gang') {
+        const m = (n.aggro || (G.modes.war.active && n.warTag)) ? 'angry' : 'shady';
+        if (n.faceMood !== m) { n.faceMood = m; G.setFace(n.obj, m); }
+      }
 
       if (n.type === 'ped') {
         if (G.state.lastShotAt && performance.now() - G.state.lastShotAt < 3000 && pd < 30) n.state = 'flee';

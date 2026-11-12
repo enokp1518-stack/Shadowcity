@@ -128,6 +128,16 @@ Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'
 
 **Important** : le jeu étant 100% statique (sans serveur), l'activation du Premium après paiement se fait via le bouton « J'ai payé » (système d'honneur). Pour une validation automatique du paiement, il faudrait un serveur + un compte PayPal Business avec webhook — hors périmètre d'un site statique.
 
+## 🌈 Beauté Ultra — visages, dialogues, voix, SC-Upscale
+
+- **Visages détaillés** : yeux, pupilles, sourcils, bouche, cheveux — 6 tons de peau, 7 couleurs de cheveux, textures faciales générées en canvas (cache partagé, coût GPU quasi nul).
+- **Expressions** : neutre, content, **en colère** (sourcils froncés + dents serrées), ** terrifié** (grands yeux), **lunettes noires** (dealers calmes). Les policiers et gangs passent en colère quand ils te chassent, les passants sont terrifiés quand ils fuient.
+- **Dialogues + voix + synchronisation labiale** : bulles de dialogue projetées en 3D au-dessus des têtes, bouche qui s'ouvre/se ferme en rythme, et **voix synthétisées** WebAudio (pitch par type : flic grave, passant aigu, monstres gutturaux). Répliques françaises contextuelles par type et par humeur.
+- **Sol amélioré** : asphalte granuleux, taches d'huile, plaques d'égout, trottoirs pavés, **pelouse texturée dans Green Heights**.
+- **Rendu cinéma** : tone mapping ACES filmique, exposition calibrée, halo autour du soleil, anisotropie ×8.
+- **SC-Upscale (type DLSS)** : rendu interne adaptatif (jusqu'à ×0.45) + amélioration contraste/saturation — fluide à 60 FPS même sur mobile, activable dans Réglages > Graphismes.
+- **Props urbains** : arbres, bancs, poubelles, bornes incendie, caisses et barils par quartier (avec collisions).
+
 ## ⚙️ Optimisation mobile
 
 - Résolution adaptative automatique (si les chutes de FPS, la résolution baisse) + 3 presets qualité jusqu'au rendu 4K (DPR ×3).

@@ -69,6 +69,7 @@ function load(f) { require(path.join(__dirname, '..', 'js', f)); }
 load('core.js');
 load('world.js');
 load('characters.js');
+load('dialogue.js');
 load('vehicles.js');
 load('combat.js');
 load('economy.js');
@@ -110,6 +111,7 @@ function frames(n, fn) {
     G.jobs.update(dt);
     G.quests.update(dt);
     G.radio.update(dt);
+    if (G.dialogue) G.dialogue.update(dt);
     G.modes.update(dt);
     G.world.updateEnvironment(dt);
   }
@@ -569,6 +571,31 @@ if (!G.settings.removeAds) throw new Error('premium unlock missing');
 G.ui.action('paypal5');
 G.ui.action('paypaldon');
 console.log('wallet OK');
+
+console.log('--- t29: visages, expressions, dialogues, voix, lip sync');
+if (typeof G.faceTex !== 'function') throw new Error('faceTex missing');
+if (typeof G.dialogue !== 'object') throw new Error('dialogue module missing');
+const ptD = G.world.randRoadPoint();
+G.player.pos.set(ptD.x, 0, ptD.z);
+const pedD = G.spawnPed();
+pedD.obj.position.set(G.player.pos.x + 3, 0, G.player.pos.z);
+if (!pedD.obj.userData.face || !pedD.obj.userData.face.mat.map) throw new Error('face texture missing');
+G.dialogue.say(pedD, 'Salut, bienvenue a Shadow City !');
+if (!pedD.talk || pedD.talk.text.indexOf('Shadow City') < 0) throw new Error('dialogue bubble missing');
+G.setFace(pedD.obj, 'angry');
+if (pedD.obj.userData.face.mood !== 'angry') throw new Error('angry expression missing');
+G.setFace(pedD.obj, 'shady');
+if (pedD.obj.userData.face.mood !== 'shady') throw new Error('shady expression missing');
+frames(30);
+if (G.dialogue.talkers.indexOf(pedD) < 0) throw new Error('talker not tracked');
+frames(200);
+G.player.pos.set(ptD.x + 200, 0, ptD.z + 200);
+frames(150);
+if (pedD.talk) throw new Error('dialogue did not end');
+G.setFaceOpen(pedD.obj, true);
+if (!pedD.obj.userData.face.open) throw new Error('lip sync open missing');
+G.setFaceOpen(pedD.obj, false);
+console.log('faces/dialogue OK');
 
 console.log('--- t26: newGame reset complet');
 G.newGame();
