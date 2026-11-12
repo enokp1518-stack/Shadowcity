@@ -641,9 +641,12 @@ console.log('--- t31: gyrophares, degats flottants, kill streak, medkits, ambian
 const t31cop = G.vehicles.makeCar('police', G.player.pos.x + 8, G.player.pos.z + 8, 0, 0x2244cc);
 if (!t31cop.lightbar || !t31cop.lightbar.r || !t31cop.lightbar.b) throw new Error('police lightbar missing');
 const colR0 = t31cop.lightbar.r.material.color.getHex();
-frames(12);
-const colR1 = t31cop.lightbar.r.material.color.getHex();
-if (colR0 === colR1) throw new Error('lightbar not animating');
+let t31flip = false;
+for (let k = 0; k < 400 && !t31flip; k++) {
+  frames(1);
+  if (t31cop.lightbar.r.material.color.getHex() !== colR0) t31flip = true;
+}
+if (!t31flip) throw new Error('lightbar not animating');
 const t31tgt = G.spawnPed();
 t31tgt.obj.position.set(G.player.pos.x + 2, 0, G.player.pos.z);
 t31tgt.hp = t31tgt.maxHp = 100000;

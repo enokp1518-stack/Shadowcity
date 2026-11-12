@@ -392,6 +392,18 @@
     G.scene.add(pole, panel);
   }
 
+  function neonGroundGlow(x, z, col) {
+    const gp = new THREE.Mesh(new THREE.PlaneGeometry(7, 12),
+      new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.15, blending: THREE.AdditiveBlending, depthWrite: false }));
+    gp.rotation.x = -Math.PI / 2;
+    gp.position.set(x, 0.34, z);
+    G.scene.add(gp);
+    const cone = new THREE.Mesh(new THREE.ConeGeometry(2.4, 7, 10, 1, true),
+      new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: 0.09, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    cone.position.set(x, 3.8, z);
+    G.scene.add(cone);
+  }
+
   function neonSign(x, y, z, ry, color, w, h) {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h),
       new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 }));
@@ -436,7 +448,9 @@
         addBuilding(cc.x + ox, cc.z + U.rand(-8, 8), w, h, d, U.pick(M));
         if (Math.random() < 0.7) {
           const col = U.pick([0xff2d95, 0x00e5ff, 0xffd23e, 0x7cff4d, 0xae3ec9]);
-          neonSign(cc.x + ox + U.pick([-1, 1]) * (w / 2 + 0.2), U.rand(6, h - 3), cc.z, Math.PI / 2, col, U.rand(2, 5), U.rand(1.5, 4));
+          const sx = cc.x + ox + U.pick([-1, 1]) * (w / 2 + 0.2);
+          neonSign(sx, U.rand(6, h - 3), cc.z, Math.PI / 2, col, U.rand(2, 5), U.rand(1.5, 4));
+          neonGroundGlow(sx + (sx > cc.x ? -1.4 : 1.4), cc.z, col);
         }
       }
     } else if (dist.id === 'residential') {
