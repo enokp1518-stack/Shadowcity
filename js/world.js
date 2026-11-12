@@ -608,6 +608,32 @@
     }
   }
 
+  const STREET_NAMES = ['Neon', 'Crimson', 'Shadow', 'Viper', 'Ghost', 'Rift', 'Midnight', 'Chrome', 'Titan', 'Onyx'];
+  const signTexCache = {};
+  function signTex(name) {
+    if (signTexCache[name]) return signTexCache[name];
+    const c = document.createElement('canvas'); c.width = 128; c.height = 32;
+    const x = c.getContext('2d');
+    x.fillStyle = '#1c3a5e'; x.fillRect(0, 0, 128, 32);
+    x.strokeStyle = '#e8eef2'; x.lineWidth = 2; x.strokeRect(2, 2, 124, 28);
+    x.fillStyle = '#e8eef2'; x.font = 'bold 16px sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle';
+    x.fillText(name, 64, 17);
+    const t = new THREE.CanvasTexture(c);
+    signTexCache[name] = t;
+    return t;
+  }
+  function streetSign(x, z) {
+    const name = (Math.random() < 0.5 ? 'RUE ' : 'AV. ') + U.pick(STREET_NAMES);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), W.mats.metal);
+    pole.position.set(x, 1.3, z);
+    const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 0.42), new THREE.MeshBasicMaterial({ map: signTex(name), transparent: false }));
+    plate.position.set(x, 2.55, z + 0.07);
+    const plate2 = plate.clone();
+    plate2.rotation.y = Math.PI;
+    plate2.position.z = z - 0.07;
+    G.scene.add(pole, plate, plate2);
+  }
+
   function buildProps() {
     const trunkGeo = new THREE.CylinderGeometry(0.18, 0.26, 2.2, 6);
     const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5a3d28 });
@@ -654,6 +680,16 @@
         G.scene.add(cont);
         W.addCollider(px2 - 2.4, pz2 - 2.4, px2 + 2.4, pz2 + 2.4, 2.4);
       } else if (dist.id === 'industrial' || dist.id === 'docks') {
+        if (Math.random() < 0.3) {
+          const cn = new THREE.Mesh(new THREE.ConeGeometry(0.32, 0.75, 8), new THREE.MeshLambertMaterial({ color: 0xff7b1c }));
+          cn.position.set(px2, 0.68, pz2);
+          const cb = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.06, 0.6), new THREE.MeshLambertMaterial({ color: 0xff7b1c }));
+          cb.position.set(px2, 0.33, pz2);
+          const band = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.12, 8), new THREE.MeshLambertMaterial({ color: 0xf2f5f8 }));
+          band.position.set(px2, 0.52, pz2);
+          G.scene.add(cn, cb, band);
+          continue;
+        }
         const m = new THREE.Mesh(Math.random() < 0.5 ? crateGeo : barrelGeo, Math.random() < 0.5 ? crateMat : barrelMat);
         m.position.set(px2, 0.7, pz2); m.castShadow = true; m.rotation.y = U.rand(0, 3);
         G.scene.add(m);
@@ -852,6 +888,12 @@
     for (let i = 0; i < W.GRID; i++) for (let j = 0; j < W.GRID; j++) buildBlock(i, j);
     buildStreetlights();
     buildProps();
+    for (let i = 0; i < W.GRID; i++) for (let j = 0; j < W.GRID; j++) {
+      if (Math.random() < 0.55) {
+        const cc = W.cellCenter(i, j);
+        streetSign(cc.x + W.BLOCK / 2 + 1.1, cc.z - W.BLOCK / 2 - 1.1);
+      }
+    }
     buildSmokestacks();
     buildCranes();
     buildMonument();
