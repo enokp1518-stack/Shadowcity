@@ -26,10 +26,12 @@
     const def = V.TYPES[typeKey];
     const g = new THREE.Group();
     const c = color !== undefined ? color : def.color;
-    const bodyMat = new THREE.MeshLambertMaterial({ color: c });
+    const bodyMat = new THREE.MeshPhongMaterial({ color: c, shininess: 80, specular: 0x555566 });
+    const glassMat = new THREE.MeshPhongMaterial({ color: 0x0e1a2c, shininess: 130, specular: 0x9db8ff });
+    const bumperMat = new THREE.MeshPhongMaterial({ color: 0x1c2026, shininess: 40, specular: 0x333338 });
     const wheels = [];
     const wg = new THREE.CylinderGeometry(0.38, 0.38, 0.3, 10);
-    const wm = new THREE.MeshLambertMaterial({ color: 0x14161a });
+    const wm = new THREE.MeshPhongMaterial({ color: 0x14161a, shininess: 30, specular: 0x444444 });
     if (def.bike) {
       const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 2.2), bodyMat);
       body.position.y = 0.8; body.castShadow = true;
@@ -37,7 +39,7 @@
       tank.position.set(0, 1.05, 0.3);
       const bar = new THREE.Mesh(new THREE.BoxGeometry(1, 0.08, 0.08), new THREE.MeshLambertMaterial({ color: 0x22262e }));
       bar.position.set(0, 1.25, 1);
-      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.8), new THREE.MeshLambertMaterial({ color: 0x14161a }));
+      const seat = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.15, 0.8), bumperMat);
       seat.position.set(0, 1.05, -0.5);
       g.add(body, tank, bar, seat);
       for (const wz of [0.95, -0.95]) {
@@ -51,11 +53,17 @@
       const bw = def.w || 2.2, bl = def.l || 4.6;
       const body = new THREE.Mesh(new THREE.BoxGeometry(bw, 0.65, bl), bodyMat);
       body.position.y = 0.62; body.castShadow = true;
-      const cabin = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.86, 0.55, bl * 0.45), new THREE.MeshLambertMaterial({ color: 0x18202e }));
+      const cabin = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.86, 0.55, bl * 0.45), glassMat);
       cabin.position.set(0, 1.18, -0.25);
       const nose = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.9, 0.3, 0.9), bodyMat);
       nose.position.set(0, 0.55, bl / 2 + 0.2);
-      g.add(body, cabin, nose);
+      const bumpF = new THREE.Mesh(new THREE.BoxGeometry(bw * 1.02, 0.22, 0.3), bumperMat);
+      bumpF.position.set(0, 0.42, bl / 2 + 0.12);
+      const bumpR = new THREE.Mesh(new THREE.BoxGeometry(bw * 1.02, 0.22, 0.3), bumperMat);
+      bumpR.position.set(0, 0.42, -bl / 2 - 0.12);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(bw * 0.7, 0.06, bl * 0.4), bodyMat);
+      roof.position.set(0, 1.48, -0.25);
+      g.add(body, cabin, nose, bumpF, bumpR, roof);
       const wxo = bw / 2 - 0.1, wzf = bl / 2 - 1.1;
       for (const [wx, wz] of [[-wxo, wzf], [wxo, wzf], [-wxo, -wzf], [wxo, -wzf]]) {
         const w = new THREE.Mesh(wg, wm);
