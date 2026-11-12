@@ -601,6 +601,31 @@
     G.scene.background = skyColor;
     fog = new THREE.Fog(0x7ec0ee, 120, 420);
     G.scene.fog = fog;
+
+    const skyMat = new THREE.ShaderMaterial({
+      uniforms: {
+        topColor: { value: new THREE.Color(0x2a6fd8) },
+        bottomColor: { value: new THREE.Color(0xbfd8f2) },
+        offset: { value: 140 },
+        expo: { value: 0.55 }
+      },
+      vertexShader: 'varying vec3 vP; void main(){ vP = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader: 'uniform vec3 topColor; uniform vec3 bottomColor; uniform float offset; uniform float expo; varying vec3 vP; void main(){ float h = normalize(vP + vec3(0.0, offset, 0.0)).y; gl_FragColor = vec4(mix(bottomColor, topColor, pow(max(h, 0.0), expo)), 1.0); }',
+      side: THREE.BackSide, depthWrite: false, fog: false
+    });
+    W.skyDome = new THREE.Mesh(new THREE.SphereGeometry(1500, 24, 12), skyMat);
+    G.scene.add(W.skyDome);
+
+    W.birds = [];
+    const birdGeo = new THREE.BufferGeometry();
+    birdGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, 0, 0, -0.6, 0.12, -0.25, 0.6, 0.12, -0.25]), 3));
+    const birdMat = new THREE.MeshBasicMaterial({ color: 0x1c2026, side: THREE.DoubleSide });
+    for (let k = 0; k < 7; k++) {
+      const b = new THREE.Mesh(birdGeo, birdMat);
+      b.userData.flight = { r: U.rand(70, 180), a: U.rand(0, 6.28), h: U.rand(45, 85), s: U.rand(0.12, 0.3), cx: U.rand(-220, 220), cz: U.rand(-220, 220), ph: U.rand(0, 6.28) };
+      G.scene.add(b);
+      W.birds.push(b);
+    }
   };
 
   W.applyFogDistance = function () {
@@ -612,6 +637,7 @@
 
   const daySky = new THREE.Color(0x7ec0ee), duskSky = new THREE.Color(0xff8a5a), nightSky = new THREE.Color(0x070b18);
   const tmpC = new THREE.Color(), tmpC2 = new THREE.Color();
+  W.skyTop = new THREE.Color(); W.skyBottom = new THREE.Color(); W.skyWhite = new THREE.Color(0xffffff);
 
   W.updateEnvironment = function (dt) {
     G.state.time = (G.state.time + dt / 60) % 24;
@@ -672,6 +698,23 @@
       W.sunGlow.position.copy(sun.position).normalize().multiplyScalar(1250);
       W.sunGlow.material.opacity = Math.max(0.08, Math.max(0, elev) * 0.9);
       W.sunGlow.visible = elev > -0.1;
+    }
+    if (W.skyDome) {
+      W.skyDome.position.copy(G.camera.position);
+      W.skyTop.copy(tmpC).multiplyScalar(0.55);
+      W.skyBottom.copy(tmpC).lerp(W.skyWhite, 0.4);
+      W.skyDome.material.uniforms.topColor.value.copy(W.skyTop);
+      W.skyDome.material.uniforms.bottomColor.value.copy(W.skyBottom);
+    }
+    if (W.birds) {
+      const bt = performance.now() / 1000;
+      for (const b of W.birds) {
+        const f = b.userData.flight;
+        f.a += f.s * dt;
+        b.position.set(f.cx + Math.cos(f.a) * f.r, f.h + Math.sin(bt * 0.7 + f.ph) * 4, f.cz + Math.sin(f.a) * f.r);
+        b.rotation.y = -f.a;
+        b.rotation.z = Math.sin(bt * 9 + f.ph) * 0.55;
+      }
     }
     if (W.clouds) {
       W.cloudMat.opacity = (W.rain.active ? 0.85 : 0.5) - nf * 0.32;
