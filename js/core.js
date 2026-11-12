@@ -1,6 +1,6 @@
 'use strict';
 window.G = {
-  version: '1.0.0',
+  version: '1.1.0',
   DEV_PAYPAL: '',
   DEV_DONATE_URL: '',
   scene: null, camera: null, renderer: null, clock: null,

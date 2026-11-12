@@ -504,7 +504,7 @@
     if (G.world && G.world.sun) {
       G.world.sun.castShadow = s.shadows;
       if (s.shadows) {
-        G.world.sun.shadow.mapSize.set(1024, 1024);
+        G.world.sun.shadow.mapSize.set(s.quality === 'ultra' ? 2048 : 1024, s.quality === 'ultra' ? 2048 : 1024);
         G.world.sun.shadow.camera.left = -80; G.world.sun.shadow.camera.right = 80;
         G.world.sun.shadow.camera.top = 80; G.world.sun.shadow.camera.bottom = -80;
         G.world.sun.shadow.camera.far = 400;

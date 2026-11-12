@@ -148,6 +148,7 @@
   };
 
   let sun, hemi, skyColor, fog, glowMats = [], stars;
+  const lightGlows = [];
 
   function wallPattern(x, style) {
     if (style === 'brick') {
@@ -423,6 +424,23 @@
     }
   }
 
+  function makeLightGlow(x, y, z) {
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 64;
+      const x2 = c.getContext('2d');
+      const grd = x2.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grd.addColorStop(0, 'rgba(255,220,140,0.9)');
+      grd.addColorStop(1, 'rgba(255,200,100,0)');
+      x2.fillStyle = grd; x2.fillRect(0, 0, 64, 64);
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, opacity: 0 }));
+      sp.scale.set(4.5, 4.5, 1);
+      sp.position.set(x, y, z);
+      G.scene.add(sp);
+      lightGlows.push(sp);
+      return sp;
+    } catch (e) { return null; }
+  }
+
   function buildStreetlights() {
     const poleGeo = new THREE.CylinderGeometry(0.12, 0.16, 7, 6);
     const bulbGeo = new THREE.SphereGeometry(0.35, 8, 6);
@@ -435,6 +453,7 @@
       const bulb = new THREE.Mesh(bulbGeo, bulbMat);
       bulb.position.set(x, 7.1, z);
       bulb.userData.streetlight = true;
+      bulb.userData.glow = makeLightGlow(bulb.position.x, bulb.position.y, bulb.position.z);
       G.scene.add(bulb);
     }
   }
@@ -687,6 +706,7 @@
       else m.emissiveIntensity = nf * 0.9;
     }
     if (stars) stars.material.opacity = nf * 0.9;
+    for (const g of lightGlows) g.material.opacity = nf * 0.75;
 
     if (W.sunDisc) {
       W.sunDisc.position.copy(sun.position).normalize().multiplyScalar(1300);
