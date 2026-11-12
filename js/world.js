@@ -751,6 +751,35 @@
   W.fogFar = 420;
   let rainPts = null, rainGeo = null;
 
+  function buildCranes() {
+    W.cranes = [];
+    for (const [ci, cj] of [[1, 1], [7, 1]]) {
+      const cc = W.cellCenter(ci, cj);
+      const g = new THREE.Group();
+      const base = new THREE.Mesh(new THREE.BoxGeometry(4, 1.2, 4), W.mats.metal);
+      base.position.y = 0.9;
+      const tower = new THREE.Mesh(new THREE.BoxGeometry(1.4, 26, 1.4), W.mats.metal);
+      tower.position.y = 14;
+      tower.castShadow = true;
+      const arm = new THREE.Group();
+      const beam = new THREE.Mesh(new THREE.BoxGeometry(24, 0.9, 1.1), W.mats.metal);
+      beam.position.x = 9;
+      const counter = new THREE.Mesh(new THREE.BoxGeometry(4, 1.4, 1.6), W.mats.dark);
+      counter.position.x = -4.5;
+      const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 6, 4), W.mats.dark);
+      cable.position.set(18, -3.5, 0);
+      const hook = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.2, 1.6), new THREE.MeshLambertMaterial({ color: 0xd9a012 }));
+      hook.position.set(18, -7, 0);
+      arm.add(beam, counter, cable, hook);
+      arm.position.y = 26.5;
+      g.add(base, tower, arm);
+      g.position.set(cc.x + 12, 0, cc.z + 12);
+      G.scene.add(g);
+      W.cranes.push({ arm, g });
+      W.addCollider(cc.x + 10, cc.z + 10, cc.x + 14, cc.z + 14, 26);
+    }
+  }
+
   function buildPuddles() {
     W.puddles = [];
     const geo = new THREE.CircleGeometry(1, 12);
@@ -800,6 +829,7 @@
     buildStreetlights();
     buildProps();
     buildSmokestacks();
+    buildCranes();
     buildTrafficLights();
     buildSunGlow();
     buildMoonGlow();
@@ -1005,6 +1035,10 @@
         sm.scale.setScalar(0.6 + k * 0.35);
         sm.material.opacity = 0.32 * (1 - k / 6);
       }
+    }
+    if (W.cranes) {
+      const ct = performance.now() / 1000;
+      for (const cr of W.cranes) cr.arm.rotation.y = Math.sin(ct * 0.12) * 1.8;
     }
     if (W.beacons) {
       const bt2 = performance.now() / 1000;
