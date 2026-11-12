@@ -93,6 +93,16 @@
       sign.position.set(0, 1.62, -0.25);
       g.add(sign);
     }
+    if (typeKey === 'bus') {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry((def.w || 2.2) + 0.02, 0.4, (def.l || 4.6) * 0.8),
+        new THREE.MeshBasicMaterial({ color: 0xf2f5f8 }));
+      stripe.position.set(0, 1.05, 0);
+      g.add(stripe);
+      const dest = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.26, 0.1),
+        new THREE.MeshBasicMaterial({ color: 0xffb020 }));
+      dest.position.set(0, 1.75, (def.l || 4.6) / 2 + 0.01);
+      g.add(dest);
+    }
     if (typeKey === 'police') {
       const stripe = new THREE.Mesh(new THREE.BoxGeometry((def.w || 2.2) + 0.02, 0.28, (def.l || 4.6) * 0.55),
         new THREE.MeshBasicMaterial({ color: 0xf2f5f8 }));
@@ -133,7 +143,7 @@
   V.spawnParked = function (n) {
     for (let k = 0; k < n; k++) {
       const pt = G.world.randRoadPoint();
-      const type = U.pick(['sedan', 'compact', 'sedan', 'taxi', 'van', 'muscle', 'truck', 'sport', 'moto', 'suv', 'pickup', 'super', 'limo']);
+      const type = U.pick(['sedan', 'compact', 'sedan', 'taxi', 'van', 'muscle', 'truck', 'sport', 'moto', 'suv', 'pickup', 'super', 'limo', 'bus']);
       const col = U.pick([0x8899aa, 0xb5443c, 0x2d6a8f, 0x3c7a44, 0xd9a012, 0x777777, 0x25282e, 0xae3ec9]);
       V.makeCar(type, pt.x, pt.z, U.rand(0, Math.PI * 2), col);
     }
@@ -149,7 +159,7 @@
       const x = axis === 'x' ? t : G.world.roadCoord(i) + lane;
       const z = axis === 'x' ? G.world.roadCoord(i) + lane : t;
       const wanted = Math.random() < (G.player.wanted >= 3 ? 0.3 : 0.08);
-      const type = wanted ? 'police' : U.pick(['sedan', 'compact', 'taxi', 'van', 'truck']);
+      const type = wanted ? 'police' : (Math.random() < 0.06 ? 'bus' : U.pick(['sedan', 'compact', 'taxi', 'van', 'truck']));
       const car = V.makeCar(type, x, z, axis === 'x' ? (dir > 0 ? Math.PI / 2 : -Math.PI / 2) : (dir > 0 ? 0 : Math.PI), wanted ? 0x2244cc : undefined);
       car.driver = 'ai';
       car.ai = { axis, dir, laneOff: lane, turnT: U.rand(4, 10) };
