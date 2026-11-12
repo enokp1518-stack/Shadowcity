@@ -213,7 +213,7 @@
       if (car.exhT <= 0) {
         car.exhT = 0.06;
         const nl = (car.def.l || 4.6) / 2 + 0.35;
-        G.spawnBurst(car.obj.position.x - fx0 * nl, 0.45, car.obj.position.z - fz0 * nl, 0xff9040, 1);
+        G.spawnBurst(car.obj.position.x - Math.sin(car.yaw) * nl, 0.45, car.obj.position.z - Math.cos(car.yaw) * nl, 0xff9040, 1);
       }
     }
 
@@ -229,7 +229,6 @@
     }
 
     const fx = Math.sin(car.yaw), fz = Math.cos(car.yaw);
-    const fx0 = fx, fz0 = fz;
     let nx = car.obj.position.x + fx * car.speed * dt;
     let nz = car.obj.position.z + fz * car.speed * dt;
     const [cx, cz] = G.world.collideCircle(nx, nz, car.rad || 1.7);
