@@ -4,7 +4,7 @@ window.G = {
   DEV_PAYPAL: '',
   DEV_DONATE_URL: '',
   scene: null, camera: null, renderer: null, clock: null,
-  settings: { quality: 'hd', shadows: true, sound: true, sens: 1.0, removeAds: false, outfit: 0x2f9bff, upscale: true },
+  settings: { quality: 'hd', shadows: true, sound: true, sens: 1.0, removeAds: false, outfit: 0x2f9bff, upscale: true, fps: false },
   state: { screen: 'menu', mode: 'story', time: 9.0, paused: false, fps: 60, resScale: 1, lastCrime: -99, wasted: false, kills: 0, achievements: [], sirenOn: false },
   stats: { kills: 0, headshots: 0, carsEntered: 0, racesWon: 0, captures: 0, waves: 0, bosses: 0, earned: 0, stunts: 0, distance: 0 },
   player: null,
@@ -49,6 +49,7 @@ G.input.pulse = function (k) { if (this.pressed[k]) { this.pressed[k] = false; r
     if (e.code === 'Escape') G.ui.togglePause();
     if (e.code === 'KeyH') G.eco.useMedkit();
     if (e.code === 'KeyM' && G.radio) G.radio.next();
+    if (e.code === 'KeyP') G.ui.togglePhoto();
   });
   addEventListener('keyup', (e) => { I.keys[e.code] = false; });
 })();

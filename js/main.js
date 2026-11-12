@@ -203,6 +203,30 @@
     $('menuHint').textContent = ('ontouchstart' in window)
       ? '📱 Mobile : joystick à gauche, glisse à droite pour la caméra, 📱 = téléphone (contrats, achats, modes).'
       : '⌨️ PC : WASD/ZQSD, clic pour capturer la souris, clic gauche tir, droit viser, E voiture, T recorder, TAB téléphone, H medkit, Espace saut.';
+    const TIPS = [
+      'Vole une voiture avec E pour traverser la ville à toute vitesse.',
+      'Les ARTÉFACTS donnent des pouvoirs : cherche la boutique 🔮.',
+      'Achète des businesses dans le téléphone 📱 pour un revenu passif.',
+      'La radio 📻 change de station avec M en voiture.',
+      'Plante, récolte, vends : les clients fidèles de ton cartel paient plus.',
+      'Un medkit (H) sauve une vie. Pense à en acheter.',
+      'Le mode photo (P) cache l’interface pour de superbes captures.',
+      'Garde un œil sur la minimap : les points bleus sont la police.',
+      'Les headshots rapportent plus d’XP.',
+      'Monte en niveau pour débloquer le Fusil Plasma ★.'
+    ];
+    const oldTip = $('menuBox').querySelector('.menuTip');
+    if (oldTip && oldTip.remove) oldTip.remove();
+    const oldVer = $('menuBox').querySelector('.menuVersion');
+    if (oldVer && oldVer.remove) oldVer.remove();
+    const tip = document.createElement('div');
+    tip.className = 'menuTip';
+    tip.textContent = '💡 Astuce : ' + U.pick(TIPS);
+    $('menuBox').appendChild(tip);
+    const ver = document.createElement('div');
+    ver.className = 'menuVersion';
+    ver.textContent = 'Shadow City v' + G.version + ' — Beauté Ultime';
+    $('menuBox').appendChild(ver);
   }
 
   function startGame(mode, save) {

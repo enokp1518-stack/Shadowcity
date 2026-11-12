@@ -315,6 +315,8 @@
       html += row('🖥️ Qualité', 'Perf (fluide) • HD • Ultra 4K (mobiles puissants)', { perf: 'Perf', hd: 'HD', ultra: 'Ultra 4K' }[s.quality], 'quality', { cls: 'gold' });
       html += row('🌗 Ombres', 'Ombres dynamiques (Plus beau, plus gourmand)', s.shadows ? 'ON' : 'OFF', 'shadows', { cls: s.shadows ? 'green' : '' });
       html += row('📽️ SC-Upscale (DLSS)', 'Rendu intelligent : résolution interne adaptative + netteté/contraste améliorés — fluide et beau', s.upscale ? 'ON' : 'OFF', 'upscale', { cls: s.upscale ? 'green' : '' });
+      html += row('📈 Compteur FPS', 'Affiche les performances en temps réel', s.fps ? 'ON' : 'OFF', 'fps', { cls: s.fps ? 'green' : '' });
+      html += row('📷 Mode photo', 'Masque l’interface pour de superbes captures — touche P', G.state.photoMode ? 'Quitter' : 'Activer', 'photo', { cls: 'gold' });
       html += '<div class="secTitle">Audio & contrôles</div>';
       html += row('🔊 Son', 'Effets sonores', s.sound ? 'ON' : 'OFF', 'sound', { cls: s.sound ? 'green' : '' });
       html += row('🖱️ Sensibilité', 'Caméra / visée : ' + s.sens.toFixed(1) + 'x', '+ / −', 'sens');
@@ -449,6 +451,8 @@
       }
       case 'shadows': G.settings.shadows = !G.settings.shadows; G.ui.applySettings(); break;
       case 'upscale': G.settings.upscale = !G.settings.upscale; G.ui.applySettings(); break;
+      case 'fps': G.settings.fps = !G.settings.fps; UI.refreshPhone(); break;
+      case 'photo': UI.togglePhoto(); UI.refreshPhone(); break;
       case 'sound': G.settings.sound = !G.settings.sound; if (!G.settings.sound) G.sfx.engine(false); break;
       case 'sens': {
         const steps = [0.5, 0.75, 1, 1.5, 2];
@@ -552,6 +556,16 @@
       ctx.fillStyle = '#' + b.color.toString(16).padStart(6, '0');
       ctx.beginPath(); ctx.arc(b.x, b.z, 9, 0, Math.PI * 2); ctx.fill();
     }
+    for (const c of G.cars) {
+      if (c.wrecked) continue;
+      ctx.fillStyle = c.type === 'police' ? '#4d8dff' : '#9aa4b2';
+      ctx.beginPath(); ctx.arc(c.obj.position.x, c.obj.position.z, 5, 0, Math.PI * 2); ctx.fill();
+    }
+    for (const bz of G.eco.businesses) {
+      if (!bz.owned || bz.x === undefined) continue;
+      ctx.fillStyle = '#2fd46e';
+      ctx.beginPath(); ctx.arc(bz.x, bz.z, 8, 0, Math.PI * 2); ctx.fill();
+    }
     const sm = G.modes.storyMarker;
     if (sm) {
       ctx.fillStyle = '#ffd23e';
@@ -593,8 +607,22 @@
     ctx.strokeRect(1, 1, S - 2, S - 2);
   };
 
+  UI.togglePhoto = function () {
+    G.state.photoMode = !G.state.photoMode;
+    if (document.body && document.body.classList) document.body.classList.toggle('photo', G.state.photoMode);
+    G.ui.toast(G.state.photoMode ? '📷 Mode photo : interface masquée (P pour sortir)' : '📷 Mode photo désactivé');
+  };
+
   UI.updateHUD = function () {
     const p = G.player;
+    const fb = $('fpsBox');
+    if (fb) {
+      const show = G.settings.fps && !G.state.photoMode;
+      if (show) {
+        fb.classList.remove('hidden');
+        fb.textContent = Math.round(G.state.fps || 0) + ' FPS';
+      } else fb.classList.add('hidden');
+    }
     $('hpFill').style.width = U.clamp(p.hp / p.maxHp * 100, 0, 100) + '%';
     $('apFill').style.width = U.clamp(p.armor / 100 * 100, 0, 100) + '%';
     $('money').textContent = U.fmt(p.money);
