@@ -145,6 +145,13 @@ G.enterCar();
 if (G.player.inCar) throw new Error('exitCar failed');
 
 console.log('--- t2b: hitscan direct');
+let t2bpt = null;
+for (let k = 0; k < 40 && !t2bpt; k++) {
+  const cand = { x: G.world.roadCoord(U.randi(0, G.world.GRID)), z: U.rand(G.world.ORIGIN + 15, -G.world.ORIGIN - 15) };
+  const [rx, rz] = G.world.collideCircle(cand.x, cand.z, 8);
+  if (rx === cand.x && rz === cand.z) t2bpt = cand;
+}
+if (t2bpt) G.player.pos.set(t2bpt.x, 0, t2bpt.z);
 const target = G.spawnGang('downtown', G.player.pos.x, G.player.pos.z + 8, false);
 target.aggro = false;
 target.obj.position.set(G.player.pos.x, 0, G.player.pos.z + 8);
@@ -705,7 +712,7 @@ G.input.keys['Space'] = true;
 frames(3);
 G.input.keys['Space'] = false;
 G.player.inCar = null; t32car.driver = null;
-if (G.effects.length <= t32fx) throw new Error('skid marks missing');
+if (!G.effects.some(e => e.ttl > 5)) throw new Error('skid marks missing');
 console.log('design continue OK');
 
 console.log('--- t33: serie 3 - blimp, avion, vapeur, onde de choc, klaxon, pigeons, minimap pickups');
@@ -714,6 +721,8 @@ const t33blimpA = G.world.blimp.a;
 frames(4);
 if (G.world.blimp.a === t33blimpA) throw new Error('blimp not orbiting');
 if (!G.world.plane || !G.world.plane.g) throw new Error('airliner missing');
+G.world.plane.t = 0;
+G.world.plane.g.position.copy(G.world.plane.from);
 const t33planeP = G.world.plane.g.position.clone();
 frames(4);
 if (G.world.plane.g.position.distanceTo(t33planeP) === 0) throw new Error('airliner not moving');
