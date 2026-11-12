@@ -621,6 +621,7 @@
 
   UI.updateHUD = function () {
     const p = G.player;
+    if (document.body && document.body.classList) document.body.classList.toggle('lowhp', p.hp < 30 && !G.state.wasted);
     const fb = $('fpsBox');
     if (fb) {
       const show = G.settings.fps && !G.state.photoMode;

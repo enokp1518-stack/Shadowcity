@@ -54,6 +54,11 @@
     }
     G.camera.position.lerp(desired, 0.35);
     G.camera.lookAt(target);
+    const fovT = p.inCar ? 70 + Math.min(14, Math.abs(p.inCar.speed) * 0.45) : 70;
+    if (Math.abs(G.camera.fov - fovT) > 0.3) {
+      G.camera.fov = U.lerp(G.camera.fov, fovT, 0.08);
+      G.camera.updateProjectionMatrix();
+    }
   }
 
   function nearestSpecial() {
