@@ -448,6 +448,8 @@
       if (car.wrecked) {
         car.burnT += dt;
         car.exhT -= dt;
+        if (car.tail) car.tail.material.color.setHex(Math.floor(performance.now() / 450) % 2 ? 0xffb020 : 0x553a10);
+        if (car.rev) car.rev.material.color.setHex(Math.floor(performance.now() / 450) % 2 ? 0xffb020 : 0x553a10);
         if (car.exhT <= 0) {
           car.exhT = 0.22;
           G.spawnBurst(car.obj.position.x, 1.2 + Math.min(2, car.burnT * 0.3), car.obj.position.z, car.burnT < 8 ? 0x2a2a2a : 0x555a60, 1);
