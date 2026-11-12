@@ -356,6 +356,27 @@
       ac.castShadow = true;
       G.scene.add(ac);
     }
+    if (h > 16 && Math.random() < 0.45) {
+      const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 4, 6), W.mats.metal);
+      const ax = x + U.rand(-w / 4, w / 4), az = z + U.rand(-d / 4, d / 4);
+      ant.position.set(ax, h + 2.3, az);
+      G.scene.add(ant);
+      const bc = new THREE.Mesh(new THREE.SphereGeometry(0.2, 6, 5),
+        new THREE.MeshBasicMaterial({ color: 0xff2222, transparent: true }));
+      bc.position.set(ax, h + 4.4, az);
+      G.scene.add(bc);
+      W.beacons.push(bc);
+    }
+    if (h > 9 && h <= 16 && Math.random() < 0.35) {
+      const wt = new THREE.Group();
+      const tank = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.3, 2, 10), W.mats.trunk);
+      tank.position.y = 3;
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(1.4, 0.8, 10), W.mats.dark);
+      cap.position.y = 4.4;
+      wt.add(tank, cap);
+      wt.position.set(x + U.rand(-w / 5, w / 5), h + 0.3, z + U.rand(-d / 5, d / 5));
+      G.scene.add(wt);
+    }
     W.addCollider(x - w / 2, z - d / 2, x + w / 2, z + d / 2, h);
     return m;
   }
@@ -725,6 +746,7 @@
   }
 
   W.fountains = [];
+  W.beacons = [];
 
   W.fogFar = 420;
   let rainPts = null, rainGeo = null;
@@ -964,6 +986,10 @@
         sm.scale.setScalar(0.6 + k * 0.35);
         sm.material.opacity = 0.32 * (1 - k / 6);
       }
+    }
+    if (W.beacons) {
+      const bt2 = performance.now() / 1000;
+      for (const bc of W.beacons) bc.material.opacity = Math.sin(bt2 * 3 + bc.position.x) > 0 ? 0.9 : 0.12;
     }
     if (W.trafficLights) {
       const cyc = (performance.now() / 1000) % 10;
