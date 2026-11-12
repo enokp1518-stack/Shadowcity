@@ -310,7 +310,7 @@
       const um = new THREE.Group();
       const canopy = new THREE.Mesh(new THREE.ConeGeometry(0.75, 0.3, 8),
         new THREE.MeshLambertMaterial({ color: U.pick([0x1971c2, 0xd9480f, 0x2f9e44, 0x495057, 0xae3ec9]) }));
-      const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.1, 5), W.mats ? W.mats.dark : new THREE.MeshLambertMaterial({ color: 0x222 }));
+      const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.1, 5), new THREE.MeshLambertMaterial({ color: 0x22262e }));
       stick.position.y = -0.55;
       um.add(canopy, stick);
       um.position.set(0.25, 2.35, 0);
