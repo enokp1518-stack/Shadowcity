@@ -242,6 +242,13 @@
     s.position.copy(pos);
     G.scene.add(s);
     G.effects.push({ obj: s, ttl: 0.4, grow: radius });
+    for (let k = 0; k < 8; k++) {
+      const sh = new THREE.Mesh(new THREE.BoxGeometry(0.1, 0.02, 0.14),
+        new THREE.MeshBasicMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.85 }));
+      sh.position.set(pos.x + U.rand(-0.6, 0.6), pos.y + U.rand(0.5, 1.6), pos.z + U.rand(-0.6, 0.6));
+      G.scene.add(sh);
+      G.effects.push({ obj: sh, ttl: U.rand(0.5, 0.9), vel: new THREE.Vector3(U.rand(-6, 6), U.rand(4, 8), U.rand(-6, 6)) });
+    }
     const ring = new THREE.Mesh(new THREE.RingGeometry(0.6, 1, 28),
       new THREE.MeshBasicMaterial({ color: 0xffd890, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
     ring.rotation.x = -Math.PI / 2;
