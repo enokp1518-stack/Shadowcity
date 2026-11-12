@@ -131,7 +131,7 @@ Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'
 ## 🌈 Beauté Ultra — visages, dialogues, voix, SC-Upscale
 
 - **Visages détaillés** : yeux, pupilles, sourcils, bouche, cheveux — 6 tons de peau, 7 couleurs de cheveux, textures faciales générées en canvas (cache partagé, coût GPU quasi nul).
-- **Expressions** : neutre, content, **en colère** (sourcils froncés + dents serrées), ** terrifié** (grands yeux), **lunettes noires** (dealers calmes). Les policiers et gangs passent en colère quand ils te chassent, les passants sont terrifiés quand ils fuient.
+- **Expressions** : neutre, content, **en colère** (sourcils froncés + dents serrées), **terrifié** (grands yeux), **lunettes noires** (dealers calmes). Les policiers et gangs passent en colère quand ils te chassent, les passants sont terrifiés quand ils fuient.
 - **Dialogues + voix + synchronisation labiale** : bulles de dialogue projetées en 3D au-dessus des têtes, bouche qui s'ouvre/se ferme en rythme, et **voix synthétisées** WebAudio (pitch par type : flic grave, passant aigu, monstres gutturaux). Répliques françaises contextuelles par type et par humeur.
 - **Sol amélioré** : asphalte granuleux, taches d'huile, plaques d'égout, trottoirs pavés, **pelouse texturée dans Green Heights**.
 - **Rendu cinéma** : tone mapping ACES filmique, exposition calibrée, halo autour du soleil, anisotropie ×8.
