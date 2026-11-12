@@ -50,6 +50,7 @@ G.input.pulse = function (k) { if (this.pressed[k]) { this.pressed[k] = false; r
     if (e.code === 'KeyH') G.eco.useMedkit();
     if (e.code === 'KeyM' && G.radio) G.radio.next();
     if (e.code === 'KeyP') G.ui.togglePhoto();
+    if (e.code === 'KeyG' && G.player && G.player.inCar) G.horn();
   });
   addEventListener('keyup', (e) => { I.keys[e.code] = false; });
 })();
@@ -175,6 +176,47 @@ const SFX = {
   step() { this.noise(0.05, 0.05, 900); },
   horn() { this.tone(310, 0.25, 'square', 0.1); this.tone(370, 0.25, 'square', 0.08); },
   thunder() { this.noise(1.4, 0.4, 120); this.noise(0.9, 0.28, 60); },
+  crickets(on) {
+    const c = this.ensure();
+    if (!c) return;
+    if (on && !this.cricketSrc) {
+      const n = Math.floor(c.sampleRate * 1.2), buf = c.createBuffer(1, n, c.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) {
+        const ph = (i % Math.floor(c.sampleRate * 0.04)) / (c.sampleRate * 0.04);
+        d[i] = (Math.random() * 2 - 1) * Math.sin(ph * Math.PI) * 0.5;
+      }
+      this.cricketSrc = c.createBufferSource();
+      this.cricketSrc.buffer = buf; this.cricketSrc.loop = true;
+      const f = c.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 4200; f.Q.value = 6;
+      this.cricketGain = c.createGain(); this.cricketGain.gain.value = 0;
+      this.cricketSrc.connect(f); f.connect(this.cricketGain); this.cricketGain.connect(this.master);
+      this.cricketSrc.start();
+    } else if (!on && this.cricketSrc) {
+      try { this.cricketSrc.stop(); } catch (e) {}
+      this.cricketSrc = null;
+    }
+  },
+  cricketVol(v) {
+    if (this.cricketGain) this.cricketGain.gain.value = v * 0.05;
+  },
+  horn() {
+    const c = this.ensure();
+    if (!c) return;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'square';
+    o.frequency.value = 340;
+    const o2 = c.createOscillator(), g2 = c.createGain();
+    o2.type = 'square';
+    o2.frequency.value = 425;
+    g.gain.setValueAtTime(0.12, c.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.45);
+    g2.gain.setValueAtTime(0.1, c.currentTime);
+    g2.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.45);
+    o.connect(g); o2.connect(g2); g.connect(this.master); g2.connect(this.master);
+    o.start(); o2.start();
+    o.stop(c.currentTime + 0.5); o2.stop(c.currentTime + 0.5);
+  },
   rainLoop(on) {
     const c = this.ensure();
     if (!c) return;
@@ -243,6 +285,15 @@ const SFX = {
   setEngine(speed) { if (this.engOsc) { this.engOsc.frequency.value = 55 + Math.abs(speed) * 3.2; this.engGain.gain.value = 0.035 + Math.min(0.04, Math.abs(speed) * 0.002); } }
 };
 G.sfx = SFX;
+G.horn = function () {
+  G.sfx.horn();
+  const p = G.player.pos;
+  for (const n of G.npcs) {
+    if (n.type !== 'ped' || n.dead) continue;
+    const d = Math.sqrt(U.d2(n.obj.position.x, n.obj.position.z, p.x, p.z));
+    if (d < 9) n.state = 'flee';
+  }
+};
 
 G.newGame = function () {
   const p = G.player;

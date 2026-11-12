@@ -1207,6 +1207,11 @@
         sm.material.opacity = 0.32 * (1 - k / 6);
       }
     }
+    if (G.sfx.cricketVol) {
+      const pc = G.player && G.player.pos ? W.districtAt(G.player.pos.x, G.player.pos.z) : 'downtown';
+      G.sfx.cricketVol(nf * (pc === 'residential' ? 1 : 0.25));
+      if (nf > 0.15) G.sfx.crickets(true);
+    }
     if (W.steam) {
       for (const sp of W.steam) {
         sp.userData.steamT = (sp.userData.steamT + dt * 0.7) % 3.2;
