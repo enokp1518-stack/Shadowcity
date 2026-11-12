@@ -81,9 +81,12 @@
     const lw = (def.w || 2.2) * 0.75, ln = (def.l || 4.6) / 2 + 0.02;
     const hl = new THREE.Mesh(new THREE.BoxGeometry(lw, 0.15, 0.1), new THREE.MeshBasicMaterial({ color: 0xfff2b0 }));
     hl.position.set(0, 0.62, ln);
-    const tl = new THREE.Mesh(new THREE.BoxGeometry(lw, 0.15, 0.1), new THREE.MeshBasicMaterial({ color: 0xff2222 }));
+    const tl = new THREE.Mesh(new THREE.BoxGeometry(lw, 0.15, 0.1), new THREE.MeshBasicMaterial({ color: 0x881818 }));
     tl.position.set(0, 0.62, -ln);
-    g.add(hl, tl);
+    const rev = new THREE.Mesh(new THREE.BoxGeometry(lw * 0.4, 0.12, 0.1), new THREE.MeshBasicMaterial({ color: 0xf2f5f8 }));
+    rev.position.set(0, 0.45, -ln - 0.01);
+    rev.visible = false;
+    g.add(hl, tl, rev);
     if (typeKey === 'taxi') {
       const sign = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.22, 0.34),
         new THREE.MeshBasicMaterial({ color: 0xffd23e }));
@@ -120,7 +123,7 @@
     G.scene.add(g);
     const car = {
       obj: g, type: typeKey, def, hp: def.hp, maxHp: def.hp, speed: 0, yaw: yaw || 0, rad: def.rad || (def.bike ? 0.9 : 1.7),
-      driver: null, wheels, bodyMat, wrecked: false, colorHex: c, lightbar,
+      driver: null, wheels, bodyMat, wrecked: false, colorHex: c, lightbar, tail: tl, rev,
       ai: null, race: null, burnT: 0, exhT: 0, hornT: U.rand(3, 12), skidT: 0
     };
     G.cars.push(car);
@@ -255,6 +258,8 @@
       if (G.yt.recording && Math.random() < dt * 0.5) G.yt.addEvent(40, '🏎️ Slides à fond !');
     }
     G.sfx.setEngine(car.speed);
+    if (car.tail) car.tail.material.color.setHex(brake ? 0xff4444 : 0x881818);
+    if (car.rev) car.rev.visible = car.speed < -1;
     car.skidT -= dt;
     if (brake && Math.abs(car.speed) > 8 && car.skidT <= 0) {
       car.skidT = 0.05;
