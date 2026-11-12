@@ -160,7 +160,7 @@
       weapons: { fists: { owned: true, ammo: Infinity, reserve: Infinity } },
       cur: 'fists', reloadT: 0, fireT: 0,
       inCar: null, aiming: false, sprint: false, animT: 0,
-      medkits: 3
+      medkits: 3, punchT: 0, punchArm: false
     };
     G.player.pos.x += 0;
   }
@@ -223,6 +223,18 @@
     if (p.aiming) {
       p.obj.userData.anim.rArm.rotation.x = -Math.PI / 2;
       p.obj.userData.anim.rArm.userData.joint.rotation.x = -0.08;
+    }
+    if (p.punchT > 0) {
+      p.punchT -= dt;
+      const k = 1 - Math.max(p.punchT, 0) / 0.26;
+      const swing = Math.sin(Math.min(k * Math.PI, Math.PI));
+      const a = p.obj.userData.anim;
+      const arm = p.punchArm ? a.rArm : a.lArm;
+      arm.rotation.x = -swing * Math.PI * 0.6;
+      arm.userData.joint.rotation.x = -swing * 0.7;
+      a.body.rotation.y = (p.punchArm ? -1 : 1) * swing * 0.3;
+    } else {
+      p.obj.userData.anim.body.rotation.y = 0;
     }
 
     G.stats.distance += Math.hypot(p.vel.x, p.vel.z) * dt;

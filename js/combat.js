@@ -64,6 +64,15 @@
     return d.normalize();
   }
 
+  G.spawnBurst = function (x, y, z, color, n) {
+    for (let k = 0; k < (n || 6); k++) {
+      const m = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.13, 0.13), new THREE.MeshBasicMaterial({ color, transparent: true }));
+      m.position.set(x, y, z);
+      G.scene.add(m);
+      G.effects.push({ obj: m, ttl: U.rand(0.25, 0.5), vel: new THREE.Vector3(U.rand(-4.5, 4.5), U.rand(2, 6.5), U.rand(-4.5, 4.5)) });
+    }
+  };
+
   C.fire = function () {
     const p = G.player;
     const w = C.curWeapon();
@@ -80,16 +89,29 @@
 
     if (w.type === 'melee') {
       G.sfx.melee();
+      p.punchT = 0.26;
+      p.punchArm = !p.punchArm;
       const total = w.dmg * G.eco.bonuses().dmg;
       let hitAny = false;
+      const f = G.V3(Math.sin(p.obj.rotation.y), 0, Math.cos(p.obj.rotation.y));
       for (const n of G.npcs) {
         if (n.dead) continue;
         const d = Math.sqrt(U.d2(n.obj.position.x, n.obj.position.z, p.pos.x, p.pos.z));
         if (d < w.range) {
           const to = G.V3(n.obj.position.x - p.pos.x, 0, n.obj.position.z - p.pos.z).normalize();
-          const f = G.V3(Math.sin(p.obj.rotation.y), 0, Math.cos(p.obj.rotation.y));
-          if (to.dot(f) > 0.3) { G.damageNPC(n, total, false); hitAny = true; }
+          if (to.dot(f) > 0.3) {
+            G.damageNPC(n, total, false);
+            hitAny = true;
+            n.obj.position.x += f.x * 0.55;
+            n.obj.position.z += f.z * 0.55;
+            G.spawnBurst(n.obj.position.x, 1.3, n.obj.position.z, 0xff5544, 7);
+            G.cam.shake = Math.max(G.cam.shake, 0.14);
+          }
         }
+      }
+      if (!hitAny) {
+        const wx = p.pos.x + f.x * 1.6, wz = p.pos.z + f.z * 1.6;
+        G.spawnBurst(wx, 1.2, wz, 0xcccccc, 3);
       }
       if (hitAny && G.yt.recording) G.yt.addEvent(8, 'Combat au corps à corps !');
       return;
@@ -98,6 +120,8 @@
     slot.ammo--;
     G.sfx.shot(w.type === 'launcher');
     G.state.lastShotAt = performance.now();
+    G.spawnBurst(origin.x + dir.x * 1.2, origin.y, origin.z + dir.z * 1.2, 0xffd070, 3);
+    if (w.type === 'launcher' || w.rocket) G.cam.shake = Math.max(G.cam.shake, 0.3);
 
     if (w.rocket) {
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff8830 }));
@@ -326,6 +350,13 @@
     for (let i = G.effects.length - 1; i >= 0; i--) {
       const e = G.effects[i];
       e.ttl -= dt;
+      if (e.vel) {
+        e.obj.position.x += e.vel.x * dt;
+        e.obj.position.y += e.vel.y * dt;
+        e.obj.position.z += e.vel.z * dt;
+        e.vel.y -= 18 * dt;
+        if (e.obj.material) e.obj.material.opacity = Math.max(0, e.ttl * 2.5);
+      }
       if (e.grow) {
         const s = 1 + (1 - Math.max(e.ttl, 0) / 0.5) * e.grow;
         e.obj.scale.setScalar(s);
