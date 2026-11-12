@@ -142,6 +142,15 @@
     G.sfx.shot(w.type === 'launcher');
     G.state.lastShotAt = performance.now();
     G.spawnBurst(origin.x + dir.x * 1.2, origin.y, origin.z + dir.z * 1.2, 0xffd070, 3);
+    const fl = new THREE.PointLight(0xffc860, 3, 14);
+    fl.position.set(origin.x + dir.x * 1.4, origin.y, origin.z + dir.z * 1.4);
+    G.scene.add(fl);
+    G.effects.push({ obj: fl, ttl: 0.06 });
+    const shell = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.06, 0.16),
+      new THREE.MeshBasicMaterial({ color: 0xd8a938 }));
+    shell.position.set(origin.x, origin.y - 0.2, origin.z);
+    G.scene.add(shell);
+    G.effects.push({ obj: shell, ttl: 0.5, vel: G.V3(dir.z * U.rand(1.5, 2.5), U.rand(2, 3.5), -dir.x * U.rand(1.5, 2.5)) });
     if (w.type === 'launcher' || w.rocket) G.cam.shake = Math.max(G.cam.shake, 0.3);
 
     if (w.rocket) {
