@@ -316,6 +316,17 @@
         x.beginPath(); x.moveTo(0, q); x.lineTo(res, q); x.stroke();
       }
     }
+    x.fillStyle = 'rgba(255,200,40,0.55)';
+    for (let i = 0; i <= W.GRID; i++) {
+      const rp = W.roadCoord(i);
+      for (let t = W.ORIGIN + 4; t < -W.ORIGIN - 4; t += 7) {
+        let nearI = false;
+        for (let j = 0; j <= W.GRID; j++) if (Math.abs(t - W.roadCoord(j)) < W.ROAD / 2 + 1.5) nearI = true;
+        if (nearI) continue;
+        x.fillRect(w2c(rp - 0.2), w2c(t), 0.4 * px, 3.2 * px);
+        x.fillRect(w2c(t), w2c(rp - 0.2), 3.2 * px, 0.4 * px);
+      }
+    }
     x.fillStyle = 'rgba(255,255,255,0.35)';
     for (let i = 0; i <= W.GRID; i++) for (let j = 0; j <= W.GRID; j++) {
       const ix = W.roadCoord(i), iz = W.roadCoord(j);
