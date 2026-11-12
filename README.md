@@ -128,6 +128,15 @@ Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'
 
 **Important** : le jeu étant 100% statique (sans serveur), l'activation du Premium après paiement se fait via le bouton « J'ai payé » (système d'honneur). Pour une validation automatique du paiement, il faudrait un serveur + un compte PayPal Business avec webhook — hors périmètre d'un site statique.
 
+## 🌈 Beauté Ultime v1.1 — ciel, articulations, combat
+
+- **Ciel dégradé temps réel** : dôme shader qui suit la caméra — horizon lumineux le jour, coucher de soleil orangé, nuit profonde. 7 oiseaux planent au-dessus de la ville en battant des ailes.
+- **Articulations complètes** : bras en 2 segments avec **coudes**, jambes en 2 segments avec **genoux**, **mains** couleur peau et **chaussures** — flexion naturelle à la marche, à la course et en idle.
+- **Coups de poing réels** : animation de punch (bras alternés + rotation du torse), **recul des ennemis** à l'impact, gerbe de particules rouges, secousse de caméra ; flash de particules à la bouche des armes à feu ; gravité sur toutes les particules d'impact.
+- **Voitures laquées** : carrosserie brillante (Phong), vitres réfléchissantes bleutées, pare-chocs avant/arrière, toit, pneus brillants.
+- **Halos lumineux** : chaque lampadaire brille d'un halo chaud la nuit.
+- **Ombres HD 2048** en qualité Ultra.
+
 ## 🌈 Beauté Ultra — visages, dialogues, voix, SC-Upscale
 
 - **Visages détaillés** : yeux, pupilles, sourcils, bouche, cheveux — 6 tons de peau, 7 couleurs de cheveux, textures faciales générées en canvas (cache partagé, coût GPU quasi nul).
