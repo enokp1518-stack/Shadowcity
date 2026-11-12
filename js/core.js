@@ -1,8 +1,10 @@
 'use strict';
 window.G = {
   version: '1.0.0',
+  DEV_PAYPAL: '',
+  DEV_DONATE_URL: '',
   scene: null, camera: null, renderer: null, clock: null,
-  settings: { quality: 'hd', shadows: true, sound: true, sens: 1.0, removeAds: false, outfit: 0x2f9bff },
+  settings: { quality: 'hd', shadows: true, sound: true, sens: 1.0, removeAds: false, outfit: 0x2f9bff, upscale: true },
   state: { screen: 'menu', mode: 'story', time: 9.0, paused: false, fps: 60, resScale: 1, lastCrime: -99, wasted: false, kills: 0, achievements: [], sirenOn: false },
   stats: { kills: 0, headshots: 0, carsEntered: 0, racesWon: 0, captures: 0, waves: 0, bosses: 0, earned: 0, stunts: 0, distance: 0 },
   player: null,
@@ -169,6 +171,15 @@ const SFX = {
   shot(loud) { this.noise(0.11, loud ? 0.5 : 0.3, 1600); this.tone(180, 0.07, 'sawtooth', 0.15, -120); },
   melee() { this.noise(0.08, 0.25, 500); },
   hit() { this.tone(220, 0.06, 'square', 0.12, -80); },
+  voice(pitch) {
+    const c = this.ensure(); if (!c) return;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'square'; o.frequency.value = Math.max(60, Math.min(900, pitch));
+    g.gain.value = 0.04;
+    g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.07);
+    o.connect(g); g.connect(this.master);
+    o.start(); o.stop(c.currentTime + 0.07);
+  },
   cash() { this.tone(880, 0.09, 'sine', 0.2); this.tone(1320, 0.14, 'sine', 0.18); },
   ui() { this.tone(660, 0.05, 'sine', 0.1); },
   buy() { this.tone(520, 0.08, 'sine', 0.15); this.tone(780, 0.12, 'sine', 0.15); },

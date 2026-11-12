@@ -33,6 +33,7 @@ Sur mobile : « Ajouter à l'écran d'accueil » pour un rendu plein écran type
 
 ## 🗺️ Le monde
 
+- **Textures PBR raccordables** incluses dans `textures/` (kit 1024×1024, générées par `tools/genTextures.js`) : **mur en briques rouges patinées avec mousse** (diffuse + normal map) et **béton sombre rugueux mat** (diffuse + normal map). Les murs des bâtiments de la ville utilisent ces deux matières (briques patinées / béton brut) derrière les fenêtres allumées.
 - **5 quartiers** avec gangs à conquérir : Downtown (Les Fantômes), Les Docks (Crimson), Zone Industrielle (Iron Wolves), Green Heights (Les Vipères), Neon Strip (Neon Kings).
 - Trafic, piétons, police avec niveau de recherche (5 étoiles) : sème-la ou te fais **arrêter** (amende) — sirène et gyrophares quand elle est sur toi.
 - **Cycle jour/nuit complet** : soleil et lune visibles, nuages animés, fenêtres et néons qui s'allument la nuit, phares de voiture de nuit.
@@ -110,7 +111,32 @@ Histoire (10 contrats) • Free Roam • Guerre des gangs (capture de territoire
 ## 💰 Publicité & Premium
 
 - Une **publicité toutes les 10 minutes** de jeu (passable après 5 secondes).
-- **Shadow City Premium — 5,00 €** (paiement unique, démo simulée) : supprime définitivement toutes les pubs.
+- **Shadow City Premium — 5,00 €** : supprime définitivement toutes les pubs.
+
+### 💳 Portefeuille créateur (PayPal)
+
+Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'argent arrive directement sur ton compte PayPal.
+
+**Configuration (2 minutes)** :
+1. Crée ton lien sur https://paypal.me/create (ou récupère ton nom d'utilisateur paypal.me)
+2. Ouvre `js/core.js` et remplace la ligne `DEV_PAYPAL: ''` par `DEV_PAYPAL: 'ton-nom'` (le nom dans `paypal.me/ton-nom`)
+3. Publie — les boutons « Payer 5€ » et « Donner » (Réglages > Portefeuille créateur) ouvrent ton PayPal
+
+**Rester anonyme** : PayPal ne permet plus de renommer son lien paypal.me. Deux options :
+- `DEV_DONATE_URL` (dans `js/core.js`) : mets une URL complète de page de don sous pseudonyme (ex : page Ko-fi `https://ko-fi.com/tonpseudo`, Liberapay, etc.). Si cette variable est remplie, elle est utilisée en priorité pour les boutons « Payer 5€ » et « Donner » — ton vrai nom n'apparaît jamais.
+- Compte PayPal **Business** gratuit avec un nom d'entreprise (ex : « Shadow City Studio ») : les acheteurs voient le nom de l'entreprise au lieu du tien.
+
+**Important** : le jeu étant 100% statique (sans serveur), l'activation du Premium après paiement se fait via le bouton « J'ai payé » (système d'honneur). Pour une validation automatique du paiement, il faudrait un serveur + un compte PayPal Business avec webhook — hors périmètre d'un site statique.
+
+## 🌈 Beauté Ultra — visages, dialogues, voix, SC-Upscale
+
+- **Visages détaillés** : yeux, pupilles, sourcils, bouche, cheveux — 6 tons de peau, 7 couleurs de cheveux, textures faciales générées en canvas (cache partagé, coût GPU quasi nul).
+- **Expressions** : neutre, content, **en colère** (sourcils froncés + dents serrées), **terrifié** (grands yeux), **lunettes noires** (dealers calmes). Les policiers et gangs passent en colère quand ils te chassent, les passants sont terrifiés quand ils fuient.
+- **Dialogues + voix + synchronisation labiale** : bulles de dialogue projetées en 3D au-dessus des têtes, bouche qui s'ouvre/se ferme en rythme, et **voix synthétisées** WebAudio (pitch par type : flic grave, passant aigu, monstres gutturaux). Répliques françaises contextuelles par type et par humeur.
+- **Sol amélioré** : asphalte granuleux, taches d'huile, plaques d'égout, trottoirs pavés, **pelouse texturée dans Green Heights**.
+- **Rendu cinéma** : tone mapping ACES filmique, exposition calibrée, halo autour du soleil, anisotropie ×8.
+- **SC-Upscale (type DLSS)** : rendu interne adaptatif (jusqu'à ×0.45) + amélioration contraste/saturation — fluide à 60 FPS même sur mobile, activable dans Réglages > Graphismes.
+- **Props urbains** : arbres, bancs, poubelles, bornes incendie, caisses et barils par quartier (avec collisions).
 
 ## ⚙️ Optimisation mobile
 
@@ -118,7 +144,7 @@ Histoire (10 contrats) • Free Roam • Guerre des gangs (capture de territoire
 - Brouillard de distance réglé par preset, ombres désactivables, audio synthétisé WebAudio (zéro asset à charger).
 - **Sauvegarde automatique** (localStorage) : à chaque contrat réussi, toutes les 2 minutes, et quand l'app passe en arrière-plan.
 - **Nouvelle partie propre** : « Nouvelle partie » réinitialise tout (argent, armes, business, cartel, abonnés, territoires).
-- Testé par un harnais Node de 27 scénarios joués réellement (`node test/harness.js`).
+- Testé par un harnais Node de 28 scénarios joués réellement (`node test/harness.js`).
 
 ## 🧪 Tests
 

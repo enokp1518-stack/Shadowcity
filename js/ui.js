@@ -314,11 +314,17 @@
       let html = '<div class="secTitle">Graphismes</div>';
       html += row('🖥️ Qualité', 'Perf (fluide) • HD • Ultra 4K (mobiles puissants)', { perf: 'Perf', hd: 'HD', ultra: 'Ultra 4K' }[s.quality], 'quality', { cls: 'gold' });
       html += row('🌗 Ombres', 'Ombres dynamiques (Plus beau, plus gourmand)', s.shadows ? 'ON' : 'OFF', 'shadows', { cls: s.shadows ? 'green' : '' });
+      html += row('📽️ SC-Upscale (DLSS)', 'Rendu intelligent : résolution interne adaptative + netteté/contraste améliorés — fluide et beau', s.upscale ? 'ON' : 'OFF', 'upscale', { cls: s.upscale ? 'green' : '' });
       html += '<div class="secTitle">Audio & contrôles</div>';
       html += row('🔊 Son', 'Effets sonores', s.sound ? 'ON' : 'OFF', 'sound', { cls: s.sound ? 'green' : '' });
       html += row('🖱️ Sensibilité', 'Caméra / visée : ' + s.sens.toFixed(1) + 'x', '+ / −', 'sens');
       html += row('👕 Tenue', 'Change la couleur de ta tenue', 'Changer', 'outfit', { cls: 'gold' });
       html += row('📻 Radio', 'Shadow FM • Boom Bap 103 • Nuit Étoilée • Voltage Rock — touche M (en voiture)', 'Station suivante', 'radio', { cls: 'gold' });
+      html += '<div class="secTitle">💳 Portefeuille créateur</div>';
+      html += row('⭐ Premium — 5€', 'Supprime toutes les pubs pour toujours — paiement PayPal', 'Payer 5€', 'paypal5', { cls: 'gold' });
+      if (G.settings.removeAds) html += row('✅ Premium actif', 'Merci pour ton soutien !', '—', 'noop', { dis: true, cls: 'green' });
+      else html += row("🔓 J'ai payé — Activer", 'Après ton paiement PayPal, active ton Premium ici', 'Activer', 'premiumUnlock', { cls: 'green' });
+      html += row('💛 Soutenir le dev', 'Don libre — merci !', 'Donner', 'paypaldon', { cls: 'gold' });
       html += '<div class="secTitle">Sauvegarde</div>';
       html += row('💾 Sauvegarder', 'Ta progression est stockée sur cet appareil', 'Sauvegarder', 'save', { cls: 'green' });
       html += row('🗑️ Nouvelle partie', 'Efface la sauvegarde et recommence à zéro', 'Tout effacer', 'wipe', { cls: 'red' });
@@ -374,6 +380,23 @@
       case 'radio': G.radio.next(); break;
       case 'upgradebiz': G.eco.upgradeBusiness(arg); break;
       case 'live': if (G.yt.live) G.yt.stopLive(); else G.closePhoneAfter(() => G.yt.startLive()); break;
+      case 'paypal5':
+        if (G.DEV_DONATE_URL) { if (window.open) window.open(G.DEV_DONATE_URL, '_blank'); G.ui.toast("Page de paiement ouverte — reviens ici et appuie sur « J'ai payé »"); break; }
+        if (!G.DEV_PAYPAL) { G.ui.toast('Le créateur doit configurer son lien de paiement (voir README)', 'warn'); G.sfx.deny(); break; }
+        if (window.open) window.open('https://paypal.me/' + G.DEV_PAYPAL + '/5', '_blank');
+        G.ui.toast("Paiement PayPal ouvert — reviens ici et appuie sur « J'ai payé »");
+        break;
+      case 'paypaldon':
+        if (G.DEV_DONATE_URL) { if (window.open) window.open(G.DEV_DONATE_URL, '_blank'); break; }
+        if (!G.DEV_PAYPAL) { G.ui.toast('Le créateur doit configurer son lien de paiement (voir README)', 'warn'); G.sfx.deny(); break; }
+        if (window.open) window.open('https://paypal.me/' + G.DEV_PAYPAL, '_blank');
+        break;
+      case 'premiumUnlock':
+        G.settings.removeAds = true;
+        G.save(true);
+        G.ui.toast('⭐ Premium activé — plus aucune pub !', 'money');
+        G.sfx.levelup();
+        break;
       case 'war': G.closePhoneAfter(() => G.modes.startWar(arg)); break;
       case 'race': G.closePhoneAfter(() => G.modes.startRace(parseInt(arg))); break;
       case 'bribe':
@@ -425,6 +448,7 @@
         break;
       }
       case 'shadows': G.settings.shadows = !G.settings.shadows; G.ui.applySettings(); break;
+      case 'upscale': G.settings.upscale = !G.settings.upscale; G.ui.applySettings(); break;
       case 'sound': G.settings.sound = !G.settings.sound; if (!G.settings.sound) G.sfx.engine(false); break;
       case 'sens': {
         const steps = [0.5, 0.75, 1, 1.5, 2];
@@ -473,7 +497,9 @@
     let base = 1;
     if (s.quality === 'hd') base = Math.min(dpr, 1.6);
     if (s.quality === 'ultra') base = Math.min(dpr, 3);
-    r.setPixelRatio(base * G.state.resScale);
+    const up = s.upscale && s.quality !== 'perf';
+    r.setPixelRatio(base * G.state.resScale * (up ? 0.7 : 1));
+    if (r.domElement && r.domElement.style) r.domElement.style.filter = up ? 'contrast(1.06) saturate(1.12)' : 'none';
     r.shadowMap.enabled = s.shadows;
     if (G.world && G.world.sun) {
       G.world.sun.castShadow = s.shadows;

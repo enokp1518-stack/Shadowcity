@@ -7,6 +7,10 @@
     G.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
     G.renderer.setSize(innerWidth, innerHeight);
     G.renderer.outputEncoding = THREE.sRGBEncoding;
+    if (THREE.ACESFilmicToneMapping !== undefined) {
+      G.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      G.renderer.toneMappingExposure = 1.06;
+    }
     G.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     G.clock = new THREE.Clock();
   }
@@ -130,8 +134,9 @@
       const fps = fpsN / fpsAcc;
       G.state.fps = fps;
       fpsAcc = 0; fpsN = 0; adaptT = 0;
-      if (fps < 26 && G.state.resScale > 0.55) {
-        G.state.resScale = Math.max(0.5, G.state.resScale - 0.15);
+      const minS = G.settings.upscale ? 0.45 : 0.55;
+      if (fps < 26 && G.state.resScale > minS) {
+        G.state.resScale = Math.max(minS, G.state.resScale - 0.15);
         G.ui.applySettings();
       } else if (fps > 55 && G.state.resScale < 1) {
         G.state.resScale = Math.min(1, G.state.resScale + 0.1);
@@ -154,6 +159,7 @@
       G.jobs.update(dt);
       G.quests.update(dt);
       G.radio.update(dt);
+      if (G.dialogue) G.dialogue.update(dt);
       G.modes.update(dt);
       G.world.updateEnvironment(dt);
       handleInteraction();
