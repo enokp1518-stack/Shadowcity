@@ -388,6 +388,53 @@
     V._hl = sp; V._hlCar = car;
   }
 
+  V.heli = null;
+  V.updateHeli = function (dt) {
+    const wanted = G.player.wanted || 0;
+    if (!V.heli && wanted >= 4) {
+      const g = new THREE.Group();
+      const hm = new THREE.MeshPhongMaterial({ color: 0x2244cc, shininess: 80, specular: 0x555566 });
+      const dm = new THREE.MeshLambertMaterial({ color: 0x14161a });
+      const body = new THREE.Mesh(new THREE.BoxGeometry(2.2, 1.7, 5), hm);
+      const glass = new THREE.Mesh(new THREE.BoxGeometry(1.8, 1, 1.2), new THREE.MeshPhongMaterial({ color: 0x0e1a2c, shininess: 130, specular: 0x9db8ff }));
+      glass.position.set(0, 0.2, 2.4);
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 3.6), hm);
+      tail.position.set(0, 0.35, -4);
+      const fin = new THREE.Mesh(new THREE.BoxGeometry(0.1, 1.2, 0.8), hm);
+      fin.position.set(0, 0.9, -5.4);
+      const rotor = new THREE.Mesh(new THREE.BoxGeometry(10, 0.06, 0.45), dm);
+      rotor.position.y = 1.15;
+      const trotor = new THREE.Mesh(new THREE.BoxGeometry(0.06, 1.6, 0.2), dm);
+      trotor.position.set(0.3, 0.6, -5.4);
+      const skidL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 3.6), dm);
+      skidL.position.set(-1, -1.1, 0);
+      const skidR = skidL.clone(); skidR.position.x = 1;
+      const spot = new THREE.SpotLight(0xfffbe8, 0, 90, 0.3, 0.45, 1.1);
+      spot.position.set(0, -0.9, 0);
+      spot.target.position.set(0, -45, 0);
+      g.add(body, glass, tail, fin, rotor, trotor, skidL, skidR, spot, spot.target);
+      g.position.set(G.player.pos.x + 60, 36, G.player.pos.z + 60);
+      G.scene.add(g);
+      V.heli = { obj: g, rotor, trotor, spot, a: 0 };
+      G.ui.toast('🚁 Hélicoptère de police en approche !');
+    }
+    if (V.heli) {
+      if (wanted < 3) {
+        G.scene.remove(V.heli.obj);
+        V.heli = null;
+        return;
+      }
+      const h = V.heli;
+      h.a += dt * 0.45;
+      const pp = G.player.pos;
+      h.obj.position.set(pp.x + Math.cos(h.a) * 26, 34, pp.z + Math.sin(h.a) * 26);
+      h.obj.rotation.y = -h.a;
+      h.rotor.rotation.y += dt * 32;
+      h.trotor.rotation.x += dt * 40;
+      h.spot.intensity = G.world.nightFactor() > 0.2 ? 5 : 2;
+    }
+  };
+
   V.update = function (dt) {
     for (let i = G.cars.length - 1; i >= 0; i--) {
       const car = G.cars[i];
@@ -410,6 +457,7 @@
       c.lightbar.r.material.color.setHex(ph ? 0xff3333 : 0x551111);
       c.lightbar.b.material.color.setHex(ph ? 0x111144 : 0x4466ff);
     }
+    V.updateHeli(dt);
     ensureHeadlights(G.player.inCar && !G.player.inCar.wrecked ? G.player.inCar : null);
     if (V._hl) V._hl.intensity = G.world.nightFactor() * 2.5;
     let traffic = 0;
