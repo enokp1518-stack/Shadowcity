@@ -32,6 +32,7 @@
     const wheels = [];
     const wg = new THREE.CylinderGeometry(0.38, 0.38, 0.3, 10);
     const wm = new THREE.MeshPhongMaterial({ color: 0x14161a, shininess: 30, specular: 0x444444 });
+    const rimMat = new THREE.MeshPhongMaterial({ color: 0xc9d2dd, shininess: 120, specular: 0xffffff });
     if (def.bike) {
       const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.45, 2.2), bodyMat);
       body.position.y = 0.8; body.castShadow = true;
@@ -46,6 +47,8 @@
         const w = new THREE.Mesh(wg, wm);
         w.rotation.z = Math.PI / 2;
         w.position.set(0, 0.38, wz);
+        const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.32, 8), rimMat);
+        w.add(rim);
         g.add(w);
         wheels.push(w);
       }
@@ -69,6 +72,8 @@
         const w = new THREE.Mesh(wg, wm);
         w.rotation.z = Math.PI / 2;
         w.position.set(wx, 0.38, wz);
+        const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.17, 0.32, 8), rimMat);
+        w.add(rim);
         g.add(w);
         wheels.push(w);
       }
@@ -79,6 +84,26 @@
     const tl = new THREE.Mesh(new THREE.BoxGeometry(lw, 0.15, 0.1), new THREE.MeshBasicMaterial({ color: 0xff2222 }));
     tl.position.set(0, 0.62, -ln);
     g.add(hl, tl);
+    if (typeKey === 'taxi') {
+      const sign = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.22, 0.34),
+        new THREE.MeshBasicMaterial({ color: 0xffd23e }));
+      sign.position.set(0, 1.62, -0.25);
+      g.add(sign);
+    }
+    if (typeKey === 'police') {
+      const stripe = new THREE.Mesh(new THREE.BoxGeometry((def.w || 2.2) + 0.02, 0.28, (def.l || 4.6) * 0.55),
+        new THREE.MeshBasicMaterial({ color: 0xf2f5f8 }));
+      stripe.position.set(0, 0.62, 0);
+      g.add(stripe);
+    }
+    if (typeKey === 'sport' || typeKey === 'super') {
+      const wing = new THREE.Mesh(new THREE.BoxGeometry((def.w || 2.2) * 0.9, 0.07, 0.42), bodyMat);
+      wing.position.set(0, 1.18, -(def.l || 4.6) / 2 - 0.12);
+      const wL = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.3, 0.12), bumperMat);
+      wL.position.set(-(def.w || 2.2) * 0.32, 1.02, -(def.l || 4.6) / 2 - 0.12);
+      const wR = wL.clone(); wR.position.x = (def.w || 2.2) * 0.32;
+      g.add(wing, wL, wR);
+    }
     let lightbar = null;
     if (typeKey === 'police') {
       const barBase = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.09, 0.34), bumperMat);
@@ -335,6 +360,11 @@
       const car = G.cars[i];
       if (car.wrecked) {
         car.burnT += dt;
+        car.exhT -= dt;
+        if (car.exhT <= 0) {
+          car.exhT = 0.22;
+          G.spawnBurst(car.obj.position.x, 1.2 + Math.min(2, car.burnT * 0.3), car.obj.position.z, car.burnT < 8 ? 0x2a2a2a : 0x555a60, 1);
+        }
         if (car.burnT > 25) { G.scene.remove(car.obj); G.cars.splice(i, 1); }
         continue;
       }
