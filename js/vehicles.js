@@ -79,13 +79,24 @@
     const tl = new THREE.Mesh(new THREE.BoxGeometry(lw, 0.15, 0.1), new THREE.MeshBasicMaterial({ color: 0xff2222 }));
     tl.position.set(0, 0.62, -ln);
     g.add(hl, tl);
+    let lightbar = null;
+    if (typeKey === 'police') {
+      const barBase = new THREE.Mesh(new THREE.BoxGeometry(1.1, 0.09, 0.34), bumperMat);
+      barBase.position.set(0, 1.56, -0.25);
+      const lr = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 0.3), new THREE.MeshBasicMaterial({ color: 0xff3333 }));
+      lr.position.set(-0.28, 1.66, -0.25);
+      const lb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.15, 0.3), new THREE.MeshBasicMaterial({ color: 0x4466ff }));
+      lb.position.set(0.28, 1.66, -0.25);
+      g.add(barBase, lr, lb);
+      lightbar = { r: lr, b: lb };
+    }
     g.position.set(x, 0, z);
     g.rotation.y = yaw || 0;
     G.scene.add(g);
     const car = {
       obj: g, type: typeKey, def, hp: def.hp, maxHp: def.hp, speed: 0, yaw: yaw || 0, rad: def.rad || (def.bike ? 0.9 : 1.7),
-      driver: null, wheels, bodyMat, wrecked: false, colorHex: c,
-      ai: null, race: null, burnT: 0
+      driver: null, wheels, bodyMat, wrecked: false, colorHex: c, lightbar,
+      ai: null, race: null, burnT: 0, exhT: 0, hornT: U.rand(3, 12)
     };
     G.cars.push(car);
     return car;
@@ -109,8 +120,9 @@
       const t = U.rand(G.world.ORIGIN + 20, -G.world.ORIGIN - 20);
       const x = axis === 'x' ? t : G.world.roadCoord(i) + lane;
       const z = axis === 'x' ? G.world.roadCoord(i) + lane : t;
-      const type = U.pick(['sedan', 'compact', 'taxi', 'van', 'truck']);
-      const car = V.makeCar(type, x, z, axis === 'x' ? (dir > 0 ? Math.PI / 2 : -Math.PI / 2) : (dir > 0 ? 0 : Math.PI));
+      const wanted = Math.random() < (G.player.wanted >= 3 ? 0.3 : 0.08);
+      const type = wanted ? 'police' : U.pick(['sedan', 'compact', 'taxi', 'van', 'truck']);
+      const car = V.makeCar(type, x, z, axis === 'x' ? (dir > 0 ? Math.PI / 2 : -Math.PI / 2) : (dir > 0 ? 0 : Math.PI), wanted ? 0x2244cc : undefined);
       car.driver = 'ai';
       car.ai = { axis, dir, laneOff: lane, turnT: U.rand(4, 10) };
     }
@@ -206,6 +218,12 @@
       if (G.yt.recording && Math.random() < dt * 0.5) G.yt.addEvent(40, '🏎️ Slides à fond !');
     }
     G.sfx.setEngine(car.speed);
+    car.exhT -= dt;
+    if (throttle > 0.1 && car.exhT <= 0) {
+      car.exhT = 0.16;
+      const el = (car.def.l || 4.6) / 2 + 0.3;
+      G.spawnBurst(car.obj.position.x - fx * el, 0.45, car.obj.position.z - fz * el, 0x5a6068, 1);
+    }
 
     for (const n of G.npcs) {
       if (n.dead) continue;
@@ -286,6 +304,13 @@
     car.obj.rotation.y = car.yaw;
     for (const w of car.wheels) w.rotation.x += car.speed * dt * 2.4;
 
+    car.hornT -= dt;
+    if (car.hornT <= 0) {
+      car.hornT = U.rand(6, 18);
+      const pd = U.d2(px, pz, G.player.pos.x, G.player.pos.z);
+      if (pd < 900 && (ahead || Math.random() < 0.35)) G.sfx.horn();
+    }
+
     if (U.d2(px, pz, G.player.pos.x, G.player.pos.z) > 240 * 240) {
       G.scene.remove(car.obj);
       G.cars.splice(G.cars.indexOf(car), 1);
@@ -315,6 +340,12 @@
       }
       if (car.driver === 'player') V.updatePlayerCar(car, dt);
       else if (car.driver === 'ai') V.updateTraffic(car, dt);
+    }
+    const ph = Math.floor(performance.now() / 140) % 2;
+    for (const c of G.cars) {
+      if (!c.lightbar || c.wrecked) continue;
+      c.lightbar.r.material.color.setHex(ph ? 0xff3333 : 0x551111);
+      c.lightbar.b.material.color.setHex(ph ? 0x111144 : 0x4466ff);
     }
     ensureHeadlights(G.player.inCar && !G.player.inCar.wrecked ? G.player.inCar : null);
     if (V._hl) V._hl.intensity = G.world.nightFactor() * 2.5;
