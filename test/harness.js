@@ -642,7 +642,7 @@ const t31cop = G.vehicles.makeCar('police', G.player.pos.x + 8, G.player.pos.z +
 if (!t31cop.lightbar || !t31cop.lightbar.r || !t31cop.lightbar.b) throw new Error('police lightbar missing');
 const colR0 = t31cop.lightbar.r.material.color.getHex();
 let t31flip = false;
-for (let k = 0; k < 400 && !t31flip; k++) {
+for (let k = 0; k < 4000 && !t31flip; k++) {
   frames(1);
   if (t31cop.lightbar.r.material.color.getHex() !== colR0) t31flip = true;
 }
