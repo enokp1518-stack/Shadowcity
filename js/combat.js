@@ -242,6 +242,16 @@
     s.position.copy(pos);
     G.scene.add(s);
     G.effects.push({ obj: s, ttl: 0.4, grow: radius });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.6, 1, 28),
+      new THREE.MeshBasicMaterial({ color: 0xffd890, transparent: true, opacity: 0.75, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending }));
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(pos.x, Math.max(0.12, pos.y * 0.2), pos.z);
+    G.scene.add(ring);
+    G.effects.push({ obj: ring, ttl: 0.5, grow: radius * 2.4 });
+    const flash = new THREE.PointLight(0xff8030, 6, 30);
+    flash.position.copy(pos).y += 2;
+    G.scene.add(flash);
+    G.effects.push({ obj: flash, ttl: 0.12, light: true });
     for (let k = 0; k < 6; k++) {
       const sm = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.55),
         new THREE.MeshBasicMaterial({ color: 0x3a3d42, transparent: true, opacity: 0.55 }));
