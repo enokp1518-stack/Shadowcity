@@ -865,6 +865,50 @@
     }
   }
 
+  function buildFoodTrucks() {
+    for (let k = 0; k < 4; k++) {
+      const i = 4 + U.randi(0, 2), j = 4 + U.randi(0, 2);
+      const cc = W.cellCenter(i, j);
+      const x = cc.x + U.rand(-14, 14), z = cc.z + U.rand(-14, 14);
+      const g = new THREE.Group();
+      const bodyCol = U.pick([0xe8590c, 0x1971c2, 0x2f9e44, 0xae3ec9]);
+      const body = new THREE.Mesh(new THREE.BoxGeometry(4.6, 2.3, 2.1), new THREE.MeshLambertMaterial({ color: bodyCol }));
+      body.position.y = 1.35;
+      body.castShadow = true;
+      const cab = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1.6, 2), new THREE.MeshLambertMaterial({ color: 0xdfE6f0 }));
+      cab.position.set(2.6, 1, 0);
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(4.8, 0.15, 2.3), W.mats.dark);
+      roof.position.y = 2.55;
+      const cv = document.createElement('canvas');
+      cv.width = 256; cv.height = 64;
+      const cx = cv.getContext('2d');
+      cx.fillStyle = '#111418'; cx.fillRect(0, 0, 256, 64);
+      cx.fillStyle = '#ffd23e'; cx.font = 'bold 30px Arial'; cx.textAlign = 'center';
+      cx.fillText(U.pick(['HOT DOG', 'TACOS', 'BURGER', 'RAMEN']), 128, 44);
+      const menuTex = new THREE.CanvasTexture(cv);
+      const menu = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 0.8),
+        new THREE.MeshBasicMaterial({ map: menuTex, side: THREE.DoubleSide }));
+      menu.position.set(-0.3, 2.95, 0);
+      const awning = new THREE.Mesh(new THREE.BoxGeometry(3, 0.08, 1.2), new THREE.MeshLambertMaterial({ color: 0xf2f5f8 }));
+      awning.position.set(-0.3, 2.5, 1.5);
+      awning.rotation.x = 0.35;
+      g.add(body, cab, roof, menu, awning);
+      for (const wx of [-1.5, 1.5]) {
+        const wh = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.42, 0.3, 10), W.mats.dark);
+        wh.rotation.x = Math.PI / 2;
+        wh.position.set(wx, 0.42, 1.05);
+        g.add(wh);
+        const wh2 = wh.clone();
+        wh2.position.z = -1.05;
+        g.add(wh2);
+      }
+      g.position.set(x, 0, z);
+      g.rotation.y = U.rand(0, Math.PI * 2);
+      G.scene.add(g);
+      W.addCollider(x - 2.5, z - 2.5, x + 2.5, z + 2.5, 2.6);
+    }
+  }
+
   function buildBanners() {
     for (let k = 0; k < 10; k++) {
       const i = 4 + U.randi(0, 2), j = 4 + U.randi(0, 2);
@@ -1053,6 +1097,7 @@
     buildPuddles();
     buildSteamVents();
     buildBanners();
+    buildFoodTrucks();
     buildPigeons();
     buildRain();
 
