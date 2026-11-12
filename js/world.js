@@ -936,6 +936,35 @@
     }
   }
 
+  function buildStrays() {
+    W.strays = [];
+    const dogGeo = new THREE.BoxGeometry(0.7, 0.35, 0.3);
+    const catGeo = new THREE.BoxGeometry(0.45, 0.26, 0.22);
+    for (let k = 0; k < 8; k++) {
+      const isDog = k < 5;
+      const col = isDog ? U.pick([0x8a6a42, 0x495057, 0xc9a877, 0x3a3d42]) : U.pick([0x2a2c30, 0xd9a05a, 0x9aa0a8]);
+      const g = new THREE.Group();
+      const body = new THREE.Mesh(isDog ? dogGeo : catGeo, new THREE.MeshLambertMaterial({ color: col }));
+      body.castShadow = true;
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.24, 0.24), new THREE.MeshLambertMaterial({ color: col }));
+      head.position.set(isDog ? 0.42 : 0.28, 0.14, 0);
+      const tail = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.06, 0.06), new THREE.MeshLambertMaterial({ color: col }));
+      tail.position.set(isDog ? -0.45 : -0.3, 0.1, 0);
+      tail.rotation.z = 0.5;
+      for (const lx of [-0.2, 0.2]) for (const lz of [-0.09, 0.09]) {
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(0.07, 0.3, 0.07), new THREE.MeshLambertMaterial({ color: col }));
+        leg.position.set(lx, -0.28, lz);
+        g.add(leg);
+      }
+      g.add(body, head, tail);
+      const pt = W.randRoadPoint();
+      g.position.set(pt.x + U.rand(-3, 3), 0.32, pt.z + U.rand(-3, 3));
+      g.userData = { wt: U.rand(0, 3), dir: U.rand(0, Math.PI * 2), tail, isDog };
+      G.scene.add(g);
+      W.strays.push(g);
+    }
+  }
+
   function buildPigeons() {
     W.pigeons = [];
     const geo = new THREE.SphereGeometry(0.13, 6, 5);
@@ -1099,6 +1128,7 @@
     buildSteamVents();
     buildBanners();
     buildFoodTrucks();
+    buildStrays();
     buildPigeons();
     buildRain();
 
@@ -1323,6 +1353,27 @@
       flash.position.set(fx, 44, fz);
       G.scene.add(flash);
       G.effects.push({ obj: flash, ttl: 0.25, light: true });
+    }
+    if (W.strays) {
+      const pp2 = G.player ? G.player.pos : null;
+      for (const st of W.strays) {
+        st.userData.tail.rotation.z = 0.5 + Math.sin(performance.now() / 130 + st.userData.wt * 7) * 0.45;
+        if (pp2) {
+          const sd2 = U.d2(st.position.x, st.position.z, pp2.x, pp2.z);
+          if (sd2 < 9) {
+            st.userData.dir = Math.atan2(st.position.x - pp2.x, st.position.z - pp2.z);
+            st.position.x += Math.sin(st.userData.dir) * dt * 5;
+            st.position.z += Math.cos(st.userData.dir) * dt * 5;
+            st.rotation.y = st.userData.dir;
+            continue;
+          }
+        }
+        st.userData.wt -= dt;
+        if (st.userData.wt <= 0) { st.userData.wt = U.rand(2, 5); st.userData.dir = U.rand(0, Math.PI * 2); }
+        st.position.x += Math.sin(st.userData.dir) * dt * 1.1;
+        st.position.z += Math.cos(st.userData.dir) * dt * 1.1;
+        st.rotation.y = st.userData.dir;
+      }
     }
     if (W.pigeons) {
       const pp = G.player ? G.player.pos : null;
