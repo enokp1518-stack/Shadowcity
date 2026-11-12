@@ -448,13 +448,27 @@
       for (let k = 0; k < 3; k++) {
         const tx = cc.x + U.rand(-19, 19), tz = cc.z + U.rand(-19, 19);
         const tr = new THREE.Group();
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.4, 2.5), W.mats.trunk);
-        trunk.position.y = 1.25;
-        const c1 = new THREE.Mesh(new THREE.ConeGeometry(2.2, 4, 7), W.mats.leaf);
-        c1.position.y = 4.2;
-        tr.add(trunk, c1);
+        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.38, 2.6, 7), W.mats.trunk);
+        trunk.position.y = 1.3;
+        const lc = U.pick([0x2d6a34, 0x3d7a3a, 0x557a2e, 0x2a6e4a]);
+        const lmat = new THREE.MeshLambertMaterial({ color: lc });
+        const s1 = new THREE.Mesh(new THREE.SphereGeometry(1.9, 8, 6), lmat);
+        s1.position.y = 3.6; s1.castShadow = true;
+        const s2 = new THREE.Mesh(new THREE.SphereGeometry(1.4, 8, 6), lmat);
+        s2.position.set(U.rand(-0.7, 0.7), 4.7, U.rand(-0.7, 0.7));
+        const s3 = new THREE.Mesh(new THREE.SphereGeometry(1.1, 8, 6), lmat);
+        s3.position.set(U.rand(-0.9, 0.9), 4.4, U.rand(-0.9, 0.9));
+        tr.add(trunk, s1, s2, s3);
         tr.position.set(tx, 0.3, tz);
         G.scene.add(tr);
+        W.colliders.push({ x: tx, z: tz, r: 0.5 });
+      }
+      for (let k = 0; k < 8; k++) {
+        const gx = cc.x + U.rand(-21, 21), gz = cc.z + U.rand(-21, 21);
+        const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.32, U.rand(0.5, 0.9), 5), W.mats.leaf);
+        tuft.position.set(gx, 0.55, gz);
+        tuft.rotation.z = U.rand(-0.25, 0.25);
+        G.scene.add(tuft);
       }
     } else if (dist.id === 'industrial') {
       const w = U.rand(24, 34), d = U.rand(18, 26), h = U.rand(8, 15);
