@@ -153,6 +153,7 @@
   function initPlayer() {
     const obj = G.makeHumanoid(0x2f9bff);
     G.scene.add(obj);
+    obj.add(G.makeBlobShadow(0.6, 0.36));
     G.player = {
       obj, pos: new THREE.Vector3(G.world.cellCenter(4, 5).x, 0, G.world.cellCenter(4, 5).z + 20),
       vel: new THREE.Vector3(), yaw: 0, onGround: true,
@@ -272,10 +273,19 @@
 
   const GANG_COLORS = { Crimson: 0xd22c2c, Wolves: 0x9a7a4f, Vipers: 0x2f9e44, Kings: 0xae3ec9, Ghosts: 0xdfe6f0, COPS: 0x2f6bff };
 
+  G.makeBlobShadow = function (r, op) {
+    const sh = new THREE.Mesh(new THREE.CircleGeometry(r, 14),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: op, depthWrite: false }));
+    sh.rotation.x = -Math.PI / 2;
+    sh.position.y = 0.06;
+    return sh;
+  };
+
   function baseNPC(type, x, z, color, opts) {
     const obj = G.makeHumanoid(color, 0, opts);
     obj.position.set(x, 0, z);
     G.scene.add(obj);
+    obj.add(G.makeBlobShadow(0.55, 0.32));
     const npc = {
       obj, type, hp: 40, maxHp: 40, dead: false, deadT: 0,
       state: 'wander', target: null, shootCd: U.rand(0.5, 2), aiT: U.rand(0, 0.3),
