@@ -801,6 +801,7 @@
       R.active = !R.active;
       R.next = R.active ? U.rand(60, 150) : U.rand(120, 300);
       if (G.state.screen === 'play') G.ui.toast(R.active ? '🌧️ La pluie s\'abat sur Shadow City...' : '☀️ Le ciel se dégage.');
+      G.sfx.rainLoop(R.active);
     }
     if (R.active) tmpC.multiplyScalar(0.55);
     skyColor.copy(tmpC);

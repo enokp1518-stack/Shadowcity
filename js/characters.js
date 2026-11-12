@@ -160,7 +160,7 @@
       weapons: { fists: { owned: true, ammo: Infinity, reserve: Infinity } },
       cur: 'fists', reloadT: 0, fireT: 0,
       inCar: null, aiming: false, sprint: false, animT: 0,
-      medkits: 3, punchT: 0, punchArm: false
+      medkits: 3, punchT: 0, punchArm: false, landT: 0, stepT: 0
     };
     G.player.pos.x += 0;
   }
@@ -208,7 +208,10 @@
     [nx, nz] = G.world.collideCircle(nx, nz, 0.45);
     p.pos.x = nx; p.pos.z = nz;
     p.pos.y += p.vel.y * dt;
-    if (p.pos.y <= 0) { p.pos.y = 0; p.vel.y = 0; p.onGround = true; }
+    if (p.pos.y <= 0) {
+      if (p.vel.y < -9) { p.landT = 0.18; G.sfx.step(); }
+      p.pos.y = 0; p.vel.y = 0; p.onGround = true;
+    }
 
     p.obj.position.copy(p.pos);
     if (mag > 0.1 || !p.aiming) {
@@ -223,6 +226,17 @@
     if (p.aiming) {
       p.obj.userData.anim.rArm.rotation.x = -Math.PI / 2;
       p.obj.userData.anim.rArm.userData.joint.rotation.x = -0.08;
+    }
+    if (p.landT > 0) {
+      p.landT -= dt;
+      const lk = p.landT / 0.18;
+      p.obj.userData.anim.lLeg.userData.joint.rotation.x = 0.9 * lk;
+      p.obj.userData.anim.rLeg.userData.joint.rotation.x = 0.9 * lk;
+      p.obj.scale.y = 1 - 0.08 * lk;
+    } else p.obj.scale.y = 1;
+    if (mag > 0.1 && p.onGround) {
+      p.stepT -= dt;
+      if (p.stepT <= 0) { p.stepT = sprint ? 0.26 : 0.4; G.sfx.step(); }
     }
     if (p.punchT > 0) {
       p.punchT -= dt;
@@ -275,6 +289,11 @@
     const pt = G.world.randRoadPoint();
     const n = baseNPC('ped', pt.x, pt.z, U.pick([0xcc8866, 0x6688cc, 0x88bb66, 0xbb6688, 0x999999, 0xddaa55]), { mood: U.pick(['neutral', 'happy']) });
     n.hp = n.maxHp = 30;
+    if (Math.random() < 0.3) {
+      const bp = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.5, 0.2), new THREE.MeshLambertMaterial({ color: U.pick([0xd9480f, 0x1971c2, 0x2f9e44, 0x495057]) }));
+      bp.position.set(0, 1.2, -0.3);
+      n.obj.add(bp);
+    }
     return n;
   };
 
@@ -298,6 +317,12 @@
     n.dmg = swat ? 13 : 8;
     n.shootCd = 1;
     if (swat) n.obj.userData.mat.color.setHex(0x1a2a5a);
+    const capC = swat ? 0x111a33 : 0x1c3a8a;
+    const cap = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.1, 0.46), new THREE.MeshLambertMaterial({ color: capC }));
+    cap.position.y = 0.26;
+    const visor = new THREE.Mesh(new THREE.BoxGeometry(0.44, 0.04, 0.2), new THREE.MeshLambertMaterial({ color: capC }));
+    visor.position.set(0, 0.22, 0.28);
+    n.obj.userData.anim.head.add(cap, visor);
     return n;
   };
 
@@ -347,8 +372,6 @@
     G.sfx.hit();
     if (npc.hp <= 0) {
       npc.dead = true; npc.deadT = 0;
-      npc.obj.rotation.z = Math.PI / 2;
-      npc.obj.position.y = 0.4;
       G.stats.kills++;
       if (headshot) G.stats.headshots++;
       G.addXP(npc.boss ? 500 : npc.type === 'creature' ? 25 : npc.type === 'cop' ? 40 : 20);
@@ -425,6 +448,9 @@
       const n = G.npcs[i];
       if (n.dead) {
         n.deadT += dt;
+        const fall = Math.min(1, n.deadT * 3.2);
+        n.obj.rotation.z = (Math.PI / 2) * fall;
+        n.obj.position.y = 0.4 * fall;
         if (n.deadT > 6) {
           G.scene.remove(n.obj);
           G.npcs.splice(i, 1);
@@ -445,6 +471,11 @@
         if (n.hp <= 0) { G.damageNPC(n, 1, false); continue; }
       }
       n.frozen = G.eco.equipped.includes('frost') && pd < 12;
+
+      if (n.obj.userData.anim.head) {
+        const calm = n.state !== 'chase' && n.state !== 'flee';
+        n.obj.userData.anim.head.rotation.y = calm ? Math.sin((performance.now() / 1000 + n.animT) * 0.7) * 0.4 : 0;
+      }
 
       if (n.type === 'cop') {
         const m = wanted > 0 ? 'angry' : 'neutral';

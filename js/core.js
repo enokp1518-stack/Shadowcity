@@ -171,6 +171,26 @@ const SFX = {
   shot(loud) { this.noise(0.11, loud ? 0.5 : 0.3, 1600); this.tone(180, 0.07, 'sawtooth', 0.15, -120); },
   melee() { this.noise(0.08, 0.25, 500); },
   hit() { this.tone(220, 0.06, 'square', 0.12, -80); },
+  step() { this.noise(0.05, 0.05, 900); },
+  horn() { this.tone(310, 0.25, 'square', 0.1); this.tone(370, 0.25, 'square', 0.08); },
+  rainLoop(on) {
+    const c = this.ensure();
+    if (!c) return;
+    if (on && !this.rainSrc) {
+      const n = Math.floor(c.sampleRate * 2), buf = c.createBuffer(1, n, c.sampleRate);
+      const d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1;
+      this.rainSrc = c.createBufferSource();
+      this.rainSrc.buffer = buf; this.rainSrc.loop = true;
+      const f = c.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 900;
+      this.rainGain = c.createGain(); this.rainGain.gain.value = 0.045;
+      this.rainSrc.connect(f); f.connect(this.rainGain); this.rainGain.connect(this.master);
+      this.rainSrc.start();
+    } else if (!on && this.rainSrc) {
+      try { this.rainSrc.stop(); } catch (e) {}
+      this.rainSrc = null;
+    }
+  },
   voice(pitch) {
     const c = this.ensure(); if (!c) return;
     const o = c.createOscillator(), g = c.createGain();
