@@ -657,11 +657,10 @@
     try {
       const c = document.createElement('canvas'); c.width = c.height = 128;
       const x = c.getContext('2d');
-      const grd = x.createRadialGradient(64, 64, 0, 64, 64, 64);
-      grd.addColorStop(0, 'rgba(200,220,255,0.85)');
-      grd.addColorStop(0.4, 'rgba(150,180,255,0.3)');
-      grd.addColorStop(1, 'rgba(120,150,255,0)');
-      x.fillStyle = grd; x.fillRect(0, 0, 128, 128);
+      for (let k = 5; k >= 0; k--) {
+        x.fillStyle = k > 2 ? 'rgba(210,225,255,' + (0.16 * (6 - k) / 3).toFixed(3) + ')' : 'rgba(150,180,255,' + (0.14 * (3 - k) / 3).toFixed(3) + ')';
+        x.beginPath(); x.arc(64, 64, 14 + k * 9, 0, Math.PI * 2); x.fill();
+      }
       W.moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, fog: false }));
       W.moonGlow.scale.set(160, 160, 1);
       G.scene.add(W.moonGlow);

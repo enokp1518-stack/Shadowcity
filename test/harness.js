@@ -340,8 +340,24 @@ G.enterCar();
 console.log('taxi OK');
 
 console.log('--- t16: moto + pluie + phares + pets/artefacts');
-const motoPt = G.world.randRoadPoint();
+let motoPt = null;
+for (let k = 0; k < 40; k++) {
+  const cand = { x: G.world.roadCoord(U.randi(0, G.world.GRID)) + 3.5, z: U.rand(G.world.ORIGIN + 15, -G.world.ORIGIN - 15) };
+  const [rx, rz] = G.world.collideCircle(cand.x, cand.z, 1.4);
+  if (rx === cand.x && rz === cand.z) { motoPt = cand; break; }
+}
+if (!motoPt) motoPt = G.world.randRoadPoint();
 const moto = G.vehicles.makeCar('moto', motoPt.x, motoPt.z, 0, 0x00e5ff);
+for (let i = G.cars.length - 1; i >= 0; i--) {
+  const c = G.cars[i];
+  if (c !== moto) { G.scene.remove(c.obj); G.cars.splice(i, 1); }
+}
+const t16st = G.vehicles.spawnTraffic;
+G.vehicles.spawnTraffic = function () {};
+for (let i = G.npcs.length - 1; i >= 0; i--) {
+  const n = G.npcs[i];
+  if (U.d2(n.obj.position.x, n.obj.position.z, motoPt.x, motoPt.z) < 400) { G.scene.remove(n.obj); G.npcs.splice(i, 1); }
+}
 G.player.pos.set(motoPt.x + 2, 0, motoPt.z);
 if (moto.wheels.length !== 2) throw new Error('moto wheels');
 G.enterCarAt(moto);
@@ -349,6 +365,7 @@ G.input.keys['KeyW'] = true;
 frames(60);
 const motoSpeed = moto.speed;
 G.input.keys['KeyW'] = false;
+G.vehicles.spawnTraffic = t16st;
 G.enterCar();
 if (motoSpeed < 5) throw new Error('moto does not accelerate, speed=' + motoSpeed);
 G.world.rain.active = true;
@@ -619,6 +636,42 @@ G.setFaceOpen(pedD.obj, true);
 if (!pedD.obj.userData.face.open) throw new Error('lip sync open missing');
 G.setFaceOpen(pedD.obj, false);
 console.log('faces/dialogue OK');
+
+console.log('--- t31: gyrophares, degats flottants, kill streak, medkits, ambiance, HUD');
+const t31cop = G.vehicles.makeCar('police', G.player.pos.x + 8, G.player.pos.z + 8, 0, 0x2244cc);
+if (!t31cop.lightbar || !t31cop.lightbar.r || !t31cop.lightbar.b) throw new Error('police lightbar missing');
+const colR0 = t31cop.lightbar.r.material.color.getHex();
+frames(12);
+const colR1 = t31cop.lightbar.r.material.color.getHex();
+if (colR0 === colR1) throw new Error('lightbar not animating');
+const t31tgt = G.spawnPed();
+t31tgt.obj.position.set(G.player.pos.x + 2, 0, G.player.pos.z);
+t31tgt.hp = t31tgt.maxHp = 100000;
+const dn0 = G.combat.dmgNums.length;
+G.damageNPC(target, 37, false);
+if (G.combat.dmgNums.length <= dn0) throw new Error('floating damage missing');
+G.state.lastKillT = performance.now() / 1000;
+G.state.streak = 2;
+const t31m2 = G.spawnPed();
+t31m2.obj.position.set(G.player.pos.x - 2, 0, G.player.pos.z);
+G.damageNPC(t31m2, 99999, false);
+if (G.state.streak !== 3) throw new Error('kill streak missing');
+G.spawnHeal(G.player.pos.x + 1, G.player.pos.z + 1);
+const t31pk = G.pickups[G.pickups.length - 1];
+if (!t31pk || !t31pk.heal) throw new Error('medkit pickup missing');
+G.player.hp = 20;
+G.player.pos.set(t31pk.obj.position.x, 0, t31pk.obj.position.z);
+frames(3);
+if (G.player.hp <= 20) throw new Error('medkit did not heal');
+if (!G.world.fireflies) throw new Error('fireflies missing');
+if (!G.world.moonGlow) throw new Error('moon glow missing');
+G.settings.fps = true;
+G.ui.togglePhoto();
+if (!G.state.photoMode) throw new Error('photo mode missing');
+G.ui.togglePhoto();
+if (G.state.photoMode) throw new Error('photo mode not toggling back');
+G.settings.fps = false;
+console.log('gyrophares/dmgnums/streak/medkits/ambiance/HUD OK');
 
 console.log('--- t26: newGame reset complet');
 G.newGame();

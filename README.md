@@ -128,6 +128,58 @@ Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'
 
 **Important** : le jeu étant 100% statique (sans serveur), l'activation du Premium après paiement se fait via le bouton « J'ai payé » (système d'honneur). Pour une validation automatique du paiement, il faudrait un serveur + un compte PayPal Business avec webhook — hors périmètre d'un site statique.
 
+## 🌆 Mises à jour continues — plus de 50 nouveautés
+
+**Ville vivante**
+1. Fumée animée sortant des 5 cheminées d'usines
+2. 10 feux tricolores avec cycle vert/rouge réel
+3. Fontaines avec eau animée et jet
+4. Arrêts de bus
+5. Conteneurs colorés aux docks
+6. Boîtes aux lettres dans les quartiers résidentiels
+7. Climatiseurs sur les toits des grands immeubles
+8. Lignes de bord de chaussée peintes
+9. 4 panneaux publicitaires géants (Shadow Cola, Neon FM, Arseme's Guns, City Race GP)
+
+**Personnages vivants**
+10. Casquettes + visières pour les flics et le SWAT
+11. Sacs à dos sur 30% des piétons
+12. Les têtes observent autour d'elles au repos
+13. Chute morte animée (plus de disparition instantanée)
+14. Atterrissage amorti (flexion des genoux après une grande chute)
+15. Bruits de pas (marche et course)
+16. Boucle sonore de pluie
+
+**Véhicules**
+17. Gyrophares de police rouges/bleus clignotants
+18. Patrouilles de police dans le trafic (davantage si tu es recherché)
+19. Phares projecteurs allumés la nuit
+20. Fumée d'échappement à l'accélération
+21. Klaxons du trafic embouteillé
+
+**Combat**
+22. Dégâts flottants projetés en 3D
+23. Headshots affichés en doré
+24. Séries d'éliminations avec toasts 🔥
+25. Colonnes de fumée sur chaque explosion
+26. Medkits lâchés par les ennemis (soignent 40 PV)
+
+**Ambiance nocturne**
+27. Halo lumineux autour de la lune
+28. Étoiles scintillantes
+29. 42 lucioles dans Green Heights la nuit
+30. Néons qui grésillent comme de vrais enseignes
+
+**HUD & interface**
+31. Compteur FPS (réglage dans les options)
+32. Voitures affichées sur la minimap
+33. Tes businesses affichés en vert sur la minimap
+34. Mode photo (touche P) : interface masquée pour de belles captures
+35. Version du jeu affichée dans le menu
+36. 10 astuces rotatives sur l'écran d'accueil
+
+**Beauté Ultime v1.1** (ciel shader + oiseaux, coudes/genoux/mains/chaussures, coups de poing réels avec particules, voitures laquées, halos de lampadaires, ombres 2048) et **Beauté Ultra** (visages détaillés, 5 expressions, dialogues avec voix et lip sync, sol détaillé, rendu cinéma ACES, SC-Upscale type DLSS, mobilier urbain) complètent le tableau : **plus de 60 nouveautés** au total.
+
 ## 🌈 Beauté Ultime v1.1 — ciel, articulations, combat
 
 - **Ciel dégradé temps réel** : dôme shader qui suit la caméra — horizon lumineux le jour, coucher de soleil orangé, nuit profonde. 7 oiseaux planent au-dessus de la ville en battant des ailes.
