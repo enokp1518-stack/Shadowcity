@@ -110,7 +110,18 @@ Histoire (10 contrats) • Free Roam • Guerre des gangs (capture de territoire
 ## 💰 Publicité & Premium
 
 - Une **publicité toutes les 10 minutes** de jeu (passable après 5 secondes).
-- **Shadow City Premium — 5,00 €** (paiement unique, démo simulée) : supprime définitivement toutes les pubs.
+- **Shadow City Premium — 5,00 €** : supprime définitivement toutes les pubs.
+
+### 💳 Portefeuille créateur (PayPal)
+
+Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'argent arrive directement sur ton compte PayPal.
+
+**Configuration (2 minutes)** :
+1. Crée ton lien sur https://paypal.me/create (ou récupère ton nom d'utilisateur paypal.me)
+2. Ouvre `js/core.js` et remplace la ligne `DEV_PAYPAL: ''` par `DEV_PAYPAL: 'ton-nom'` (le nom dans `paypal.me/ton-nom`)
+3. Publie — les boutons « Payer 5€ » et « Donner » (Réglages > Portefeuille créateur) ouvrent ton PayPal
+
+**Important** : le jeu étant 100% statique (sans serveur), l'activation du Premium après paiement se fait via le bouton « J'ai payé » (système d'honneur). Pour une validation automatique du paiement, il faudrait un serveur + un compte PayPal Business avec webhook — hors périmètre d'un site statique.
 
 ## ⚙️ Optimisation mobile
 
@@ -118,7 +129,7 @@ Histoire (10 contrats) • Free Roam • Guerre des gangs (capture de territoire
 - Brouillard de distance réglé par preset, ombres désactivables, audio synthétisé WebAudio (zéro asset à charger).
 - **Sauvegarde automatique** (localStorage) : à chaque contrat réussi, toutes les 2 minutes, et quand l'app passe en arrière-plan.
 - **Nouvelle partie propre** : « Nouvelle partie » réinitialise tout (argent, armes, business, cartel, abonnés, territoires).
-- Testé par un harnais Node de 27 scénarios joués réellement (`node test/harness.js`).
+- Testé par un harnais Node de 28 scénarios joués réellement (`node test/harness.js`).
 
 ## 🧪 Tests
 

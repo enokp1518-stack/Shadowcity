@@ -561,6 +561,15 @@ G.cartel.upgradeDealer(0);
 if ((G.cartel.dealers[0].lvl || 1) !== 2) throw new Error('dealer upgrade missing');
 console.log('fideles/dealer OK — fideles', G.cartel.fideles.length, 'dealer lvl', G.cartel.dealers[0].lvl);
 
+console.log('--- t28: portefeuille createur');
+if (typeof G.DEV_PAYPAL !== 'string') throw new Error('DEV_PAYPAL missing');
+G.settings.removeAds = false;
+G.ui.action('premiumUnlock');
+if (!G.settings.removeAds) throw new Error('premium unlock missing');
+G.ui.action('paypal5');
+G.ui.action('paypaldon');
+console.log('wallet OK');
+
 console.log('--- t26: newGame reset complet');
 G.newGame();
 if (G.jobs.active || G.jobs.done !== 0) throw new Error('jobs not reset');

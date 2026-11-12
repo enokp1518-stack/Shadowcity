@@ -319,6 +319,11 @@
       html += row('🖱️ Sensibilité', 'Caméra / visée : ' + s.sens.toFixed(1) + 'x', '+ / −', 'sens');
       html += row('👕 Tenue', 'Change la couleur de ta tenue', 'Changer', 'outfit', { cls: 'gold' });
       html += row('📻 Radio', 'Shadow FM • Boom Bap 103 • Nuit Étoilée • Voltage Rock — touche M (en voiture)', 'Station suivante', 'radio', { cls: 'gold' });
+      html += '<div class="secTitle">💳 Portefeuille créateur</div>';
+      html += row('⭐ Premium — 5€', 'Supprime toutes les pubs pour toujours — paiement PayPal', 'Payer 5€', 'paypal5', { cls: 'gold' });
+      if (G.settings.removeAds) html += row('✅ Premium actif', 'Merci pour ton soutien !', '—', 'noop', { dis: true, cls: 'green' });
+      else html += row("🔓 J'ai payé — Activer", 'Après ton paiement PayPal, active ton Premium ici', 'Activer', 'premiumUnlock', { cls: 'green' });
+      html += row('💛 Soutenir le dev', 'Don libre via PayPal — merci !', 'Donner', 'paypaldon', { cls: 'gold' });
       html += '<div class="secTitle">Sauvegarde</div>';
       html += row('💾 Sauvegarder', 'Ta progression est stockée sur cet appareil', 'Sauvegarder', 'save', { cls: 'green' });
       html += row('🗑️ Nouvelle partie', 'Efface la sauvegarde et recommence à zéro', 'Tout effacer', 'wipe', { cls: 'red' });
@@ -374,6 +379,21 @@
       case 'radio': G.radio.next(); break;
       case 'upgradebiz': G.eco.upgradeBusiness(arg); break;
       case 'live': if (G.yt.live) G.yt.stopLive(); else G.closePhoneAfter(() => G.yt.startLive()); break;
+      case 'paypal5':
+        if (!G.DEV_PAYPAL) { G.ui.toast('Le créateur doit configurer son PayPal (voir README)', 'warn'); G.sfx.deny(); break; }
+        if (window.open) window.open('https://paypal.me/' + G.DEV_PAYPAL + '/5', '_blank');
+        G.ui.toast("Paiement PayPal ouvert — reviens ici et appuie sur « J'ai payé »");
+        break;
+      case 'paypaldon':
+        if (!G.DEV_PAYPAL) { G.ui.toast('Le créateur doit configurer son PayPal (voir README)', 'warn'); G.sfx.deny(); break; }
+        if (window.open) window.open('https://paypal.me/' + G.DEV_PAYPAL, '_blank');
+        break;
+      case 'premiumUnlock':
+        G.settings.removeAds = true;
+        G.save(true);
+        G.ui.toast('⭐ Premium activé — plus aucune pub !', 'money');
+        G.sfx.levelup();
+        break;
       case 'war': G.closePhoneAfter(() => G.modes.startWar(arg)); break;
       case 'race': G.closePhoneAfter(() => G.modes.startRace(parseInt(arg))); break;
       case 'bribe':
