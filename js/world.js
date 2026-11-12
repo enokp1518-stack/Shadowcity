@@ -451,7 +451,19 @@
       const n = U.randi(1, 2);
       for (let k = 0; k < n; k++) {
         const w = U.rand(14, 20), d = U.rand(14, 20), h = U.rand(45, 120);
-        const b = addBuilding(cc.x + U.rand(-10, 10), cc.z + U.rand(-10, 10), w, h, d, Math.random() < 0.5 ? W.mats.glass : U.pick(M));
+        const bx = cc.x + U.rand(-10, 10), bz = cc.z + U.rand(-10, 10);
+        const b = addBuilding(bx, bz, w, h, d, Math.random() < 0.5 ? W.mats.glass : U.pick(M));
+        const SHOP_NAMES = ['CAFÉ NOIR', 'BURGER', 'BANQUE', 'PHARMACIE', 'DISQUES', 'MODE', 'RAMEN', 'ARCADE'];
+        for (let f = 0; f < 2; f++) {
+          const sw2 = U.rand(3, 5);
+          const front = new THREE.Mesh(new THREE.PlaneGeometry(sw2, 2.4),
+            new THREE.MeshLambertMaterial({ color: 0xfff4d6, emissive: U.pick([0xffb84d, 0x74e8ff, 0xff8fab, 0xb3ff8a]), emissiveIntensity: 0.5 }));
+          const side = U.pick([-1, 1]);
+          front.position.set(side > 0 ? bx + w / 2 + 0.06 : bx - w / 2 - 0.06, 1.6, bz + U.rand(-d / 3, d / 3));
+          front.rotation.y = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+          G.scene.add(front);
+          glowMats.push({ isSign: true, m: front, shop: true });
+        }
         if (Math.random() < 0.6) {
           const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 8), W.mats.metal);
           ant.position.set(b.position.x, h + 4.3, b.position.z);
