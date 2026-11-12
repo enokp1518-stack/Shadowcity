@@ -268,7 +268,10 @@
       if (G.yt.recording && Math.random() < dt * 0.5) G.yt.addEvent(40, '🏎️ Slides à fond !');
     }
     G.sfx.setEngine(car.speed);
-    if (car.tail) car.tail.material.color.setHex(brake ? 0xff4444 : 0x881818);
+    if (car.tail) {
+      const nightT = G.world.nightFactor() > 0.3;
+      car.tail.material.color.setHex(brake ? 0xff4444 : (nightT ? 0xd03030 : 0x881818));
+    }
     if (car.rev) car.rev.visible = car.speed < -1;
     car.skidT -= dt;
     if (brake && Math.abs(car.speed) > 8 && car.skidT <= 0) {
