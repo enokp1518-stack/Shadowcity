@@ -746,6 +746,35 @@ if (t33npc.state === t33before && t33before !== 'flee') throw new Error('horn di
 G.player.inCar = null;
 console.log('serie 3 OK');
 
+console.log('--- t34: serie 4 - parapluies, feux d artifice, strays, bus, feux arriere nuit, eclats');
+let t34ped = G.spawnPed();
+for (let k = 0; k < 30 && !t34ped.umbrella; k++) t34ped = G.spawnPed();
+t34ped.obj.position.set(G.player.pos.x + 3, 0, G.player.pos.z);
+t34ped.home = { x: G.player.pos.x + 3, z: G.player.pos.z };
+t34ped.wx = t34ped.home.x; t34ped.wz = t34ped.home.z; t34ped.wanderT = 99;
+if (t34ped.umbrella) {
+  G.world.rain.active = true;
+  G.world.rain.next = 999;
+  frames(1);
+  if (!t34ped.umbrella.visible) throw new Error('umbrella not open in rain');
+  G.world.rain.active = false;
+  G.world.rain.next = 999;
+  frames(1);
+  if (t34ped.umbrella.visible) throw new Error('umbrella not closed after rain');
+} else throw new Error('no ped has umbrella after 30 spawns');
+if (!G.world.strays || G.world.strays.length === 0) throw new Error('strays missing');
+const t34stray = G.world.strays[0];
+t34stray.position.set(G.player.pos.x + 2, 0.32, G.player.pos.z);
+frames(2);
+const t34sd = Math.sqrt(U.d2(t34stray.position.x, t34stray.position.z, G.player.pos.x, G.player.pos.z));
+if (t34sd < 1.8) throw new Error('stray did not flee');
+const t34bus = G.vehicles.makeCar('bus', G.player.pos.x + 30, G.player.pos.z + 30, 0, 0x2d6a8f);
+if (!t34bus) throw new Error('bus missing');
+const t34fx = G.effects.length;
+G.combat.explode(G.player.pos.clone().setY(1), 5, 8, true);
+if (!G.effects.slice(t34fx).some(e => e.obj && e.obj.material && e.obj.material.color && e.obj.material.color.getHex() === 0xbfe3ff)) throw new Error('glass shards missing');
+console.log('serie 4 OK');
+
 console.log('--- t26: newGame reset complet');
 G.newGame();
 if (G.jobs.active || G.jobs.done !== 0) throw new Error('jobs not reset');
