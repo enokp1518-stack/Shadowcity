@@ -751,6 +751,30 @@
   W.fogFar = 420;
   let rainPts = null, rainGeo = null;
 
+  function buildMonument() {
+    const cc = W.cellCenter(4, 4);
+    const g = new THREE.Group();
+    const plinth = new THREE.Mesh(new THREE.BoxGeometry(7, 1.4, 7), W.mats.dark);
+    plinth.position.y = 1;
+    const step2 = new THREE.Mesh(new THREE.BoxGeometry(4.6, 1, 4.6), W.mats.metal);
+    step2.position.y = 2.2;
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 1.3, 20, 4), W.mats.sidewalk);
+    shaft.position.y = 12.7;
+    shaft.rotation.y = Math.PI / 4;
+    shaft.castShadow = true;
+    const tip = new THREE.Mesh(new THREE.ConeGeometry(0.78, 2.4, 4), W.mats.metal);
+    tip.position.y = 23.9;
+    tip.rotation.y = Math.PI / 4;
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.7, 2.4, 170, 10, 1, true),
+      new THREE.MeshBasicMaterial({ color: 0x8ab8ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    beam.position.y = 108;
+    g.add(plinth, step2, shaft, tip, beam);
+    g.position.set(cc.x + 6, 0.3, cc.z + 6);
+    G.scene.add(g);
+    W.monumentBeam = beam;
+    W.addCollider(cc.x + 2, cc.z + 2, cc.x + 10, cc.z + 10, 24);
+  }
+
   function buildCranes() {
     W.cranes = [];
     for (const [ci, cj] of [[1, 1], [7, 1]]) {
@@ -830,6 +854,7 @@
     buildProps();
     buildSmokestacks();
     buildCranes();
+    buildMonument();
     buildTrafficLights();
     buildSunGlow();
     buildMoonGlow();
@@ -1036,6 +1061,7 @@
         sm.material.opacity = 0.32 * (1 - k / 6);
       }
     }
+    if (W.monumentBeam) W.monumentBeam.material.opacity = nf * 0.16;
     if (W.cranes) {
       const ct = performance.now() / 1000;
       for (const cr of W.cranes) cr.arm.rotation.y = Math.sin(ct * 0.12) * 1.8;
