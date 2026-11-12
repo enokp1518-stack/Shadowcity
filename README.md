@@ -180,6 +180,23 @@ Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'
 
 **Beauté Ultime v1.1** (ciel shader + oiseaux, coudes/genoux/mains/chaussures, coups de poing réels avec particules, voitures laquées, halos de lampadaires, ombres 2048) et **Beauté Ultra** (visages détaillés, 5 expressions, dialogues avec voix et lip sync, sol détaillé, rendu cinéma ACES, SC-Upscale type DLSS, mobilier urbain) complètent le tableau : **plus de 60 nouveautés** au total.
 
+## 🎨 Design continu — série 3 (updates 32-44)
+
+- **NITRO** (Maj) : surpuissance temporaire, flammes à l'échappement, FOV boosté
+- **Feux de freinage** qui s'allument en rouge vif + feu blanc de marche arrière
+- **Hélicoptère de police** à 4 étoiles : rotors animés, projecteur puissant qui balaie les rues
+- **Dirigeable publicitaire** "SHADOW CITY" en orbite lente au-dessus de la ville
+- **Avion de ligne** qui traverse le ciel à haute altitude avec ses traînées blanches
+- **Vapeur** qui s'échappe des bouches d'égout
+- **Onde de choc annulaire** + flash lumineux orange à chaque explosion
+- **Grillons** la nuit à Green Heights (ambiance sonore dynamique)
+- **Klaxon** du joueur (touche G) qui fait fuir les passants
+- **Menu néon** animé + bandes ciné (letterbox) en mode photo
+- **Pickups** (argent, medkits) visibles sur la minimap
+- **Fumée de dégâts** : la voiture très endommagée fume noir
+- **Bannières publicitaires** pendantes sur les murs de Downtown
+- **Pigeons** qui picorent et s'envolent au passage du joueur
+
 ## 🎨 Design continu — série 2 (updates 14-30)
 
 - **Marquage routier** : lignes centrales jaunes pointillées sur toutes les routes
