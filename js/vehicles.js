@@ -204,6 +204,18 @@
     const wet = G.world.rain && G.world.rain.active;
     const maxSp = wet ? car.def.max * 0.85 : car.def.max;
     const gripBase = wet ? car.def.grip * 0.65 : car.def.grip;
+    const nitro = (I.keys['ShiftLeft'] || I.keys['ShiftRight']) && car.speed > 4;
+    car.nitro = !!nitro;
+    if (nitro) {
+      car.speed += car.def.acc * 0.9 * dt;
+      car.speed = Math.min(car.speed, maxSp * 1.35);
+      car.exhT -= dt;
+      if (car.exhT <= 0) {
+        car.exhT = 0.06;
+        const nl = (car.def.l || 4.6) / 2 + 0.35;
+        G.spawnBurst(car.obj.position.x - fx0 * nl, 0.45, car.obj.position.z - fz0 * nl, 0xff9040, 1);
+      }
+    }
 
     if (brake) car.speed *= 1 - 2.2 * dt;
     car.speed += throttle * car.def.acc * dt;
@@ -217,6 +229,7 @@
     }
 
     const fx = Math.sin(car.yaw), fz = Math.cos(car.yaw);
+    const fx0 = fx, fz0 = fz;
     let nx = car.obj.position.x + fx * car.speed * dt;
     let nz = car.obj.position.z + fz * car.speed * dt;
     const [cx, cz] = G.world.collideCircle(nx, nz, car.rad || 1.7);
