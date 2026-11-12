@@ -865,6 +865,24 @@
     }
   }
 
+  function buildSteamVents() {
+    W.steam = [];
+    const puffGeo = new THREE.SphereGeometry(0.7, 7, 5);
+    for (let k = 0; k < 6; k++) {
+      const pt = W.randRoadPoint();
+      const grate = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.08, 1.1), W.mats.dark);
+      grate.position.set(pt.x, 0.07, pt.z);
+      G.scene.add(grate);
+      for (let m = 0; m < 2; m++) {
+        const puff = new THREE.Mesh(puffGeo, new THREE.MeshBasicMaterial({ color: 0xd8dee6, transparent: true, opacity: 0.28, depthWrite: false }));
+        puff.position.set(pt.x, 0.6, pt.z);
+        puff.userData.steamT = m * 1.6 + U.rand(0, 0.8);
+        G.scene.add(puff);
+        W.steam.push(puff);
+      }
+    }
+  }
+
   function buildBlimp() {
     const g = new THREE.Group();
     const env = new THREE.Mesh(new THREE.SphereGeometry(12, 20, 14),
@@ -988,6 +1006,7 @@
     buildStars();
     buildFireflies();
     buildPuddles();
+    buildSteamVents();
     buildRain();
 
     W.sunDisc = new THREE.Mesh(new THREE.SphereGeometry(22, 16, 12),
@@ -1186,6 +1205,15 @@
         sm.position.y = 8 + k * 2.4;
         sm.scale.setScalar(0.6 + k * 0.35);
         sm.material.opacity = 0.32 * (1 - k / 6);
+      }
+    }
+    if (W.steam) {
+      for (const sp of W.steam) {
+        sp.userData.steamT = (sp.userData.steamT + dt * 0.7) % 3.2;
+        const k = sp.userData.steamT;
+        sp.position.y = 0.6 + k * 1.5;
+        sp.scale.setScalar(0.5 + k * 0.5);
+        sp.material.opacity = 0.28 * (1 - k / 3.2);
       }
     }
     if (W.monumentBeam) W.monumentBeam.material.opacity = nf * 0.16;
