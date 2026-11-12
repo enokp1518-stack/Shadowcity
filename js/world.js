@@ -936,6 +936,47 @@
     }
   }
 
+  function buildNeonStalls() {
+    W.stallFires = [];
+    for (let k = 0; k < 5; k++) {
+      const i = 5 + U.randi(0, 5), j = 5 + U.randi(0, 5);
+      const cc = W.cellCenter(i, j);
+      const x = cc.x + U.rand(-16, 16), z = cc.z + U.rand(-16, 16);
+      const g = new THREE.Group();
+      const counter = new THREE.Mesh(new THREE.BoxGeometry(3, 0.9, 1.2), W.mats.metal);
+      counter.position.y = 0.45;
+      const top = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.1, 1.4), W.mats.dark);
+      top.position.y = 0.95;
+      const roof = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.12, 2.2), new THREE.MeshLambertMaterial({ color: U.pick([0xd22c2c, 0x1971c2, 0x2f9e44]) }));
+      roof.position.y = 2.5;
+      for (const px of [-1.5, 1.5]) {
+        const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 2.4, 5), W.mats.metal);
+        pole.position.set(px, 1.3, -0.7);
+        g.add(pole);
+      }
+      const cv = document.createElement('canvas');
+      cv.width = 128; cv.height = 32;
+      const cx = cv.getContext('2d');
+      cx.fillStyle = '#141018'; cx.fillRect(0, 0, 128, 32);
+      cx.fillStyle = '#ff5a8a'; cx.font = 'bold 20px Arial'; cx.textAlign = 'center';
+      cx.fillText(U.pick(['KEBAB', 'NOODLES', 'TACOS', 'WOK']), 64, 24);
+      const signTex = new THREE.CanvasTexture(cv);
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.6),
+        new THREE.MeshBasicMaterial({ map: signTex, side: THREE.DoubleSide }));
+      sign.position.set(0, 2.2, 0.4);
+      const fire = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.35, 0.5, 8), W.mats.dark);
+      fire.position.set(1.1, 0.25, 0.9);
+      const flame = new THREE.PointLight(0xff7b1c, 1.6, 6);
+      flame.position.set(1.1, 0.7, 0.9);
+      g.add(counter, top, roof, sign, fire, flame);
+      g.position.set(x, 0, z);
+      g.rotation.y = U.rand(0, Math.PI * 2);
+      G.scene.add(g);
+      W.stallFires.push(flame);
+      W.addCollider(x - 1.8, z - 1.2, x + 1.8, z + 1.2, 2.5);
+    }
+  }
+
   function buildStrays() {
     W.strays = [];
     const dogGeo = new THREE.BoxGeometry(0.7, 0.35, 0.3);
@@ -1129,6 +1170,7 @@
     buildBanners();
     buildFoodTrucks();
     buildStrays();
+    buildNeonStalls();
     buildPigeons();
     buildRain();
 
@@ -1353,6 +1395,10 @@
       flash.position.set(fx, 44, fz);
       G.scene.add(flash);
       G.effects.push({ obj: flash, ttl: 0.25, light: true });
+    }
+    if (W.stallFires) {
+      const ft2 = performance.now() / 1000;
+      for (const fl of W.stallFires) fl.intensity = 1.3 + Math.sin(ft2 * 11 + fl.position.x) * 0.5;
     }
     if (W.strays) {
       const pp2 = G.player ? G.player.pos : null;
