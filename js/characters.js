@@ -508,6 +508,7 @@
     const raining = G.world.rain && G.world.rain.active;
     for (let i = G.npcs.length - 1; i >= 0; i--) {
       const n = G.npcs[i];
+      if (!n) continue;
       if (n.umbrella) n.umbrella.visible = !!raining && !n.dead;
       if (n.dead) {
         n.deadT += dt;

@@ -775,6 +775,27 @@ G.combat.explode(G.player.pos.clone().setY(1), 5, 8, true);
 if (!G.effects.slice(t34fx).some(e => e.obj && e.obj.material && e.obj.material.color && e.obj.material.color.getHex() === 0xbfe3ff)) throw new Error('glass shards missing');
 console.log('serie 4 OK');
 
+console.log('--- t35: regression - arrestation/mort en pleine boucle, gardes null');
+(function () {
+  G.player.wanted = 2;
+  const cop = G.spawnCop(G.player.pos.x, G.player.pos.z);
+  cop.obj.position.set(G.player.pos.x + 1, 0, G.player.pos.z);
+  cop.arrestT = 1.45;
+  for (let k = 0; k < 30; k++) frames(1);
+  G.player.wanted = 0;
+  G.state.wasted = false;
+})();
+(function () {
+  const gang = G.spawnGang('downtown', G.player.pos.x, G.player.pos.z + 2, true);
+  gang.aggro = true; gang.obj.position.set(G.player.pos.x, 0, G.player.pos.z + 2);
+  gang.shootCd = 0;
+  G.player.hp = 1; G.player.armor = 0;
+  for (let k = 0; k < 30; k++) frames(1);
+})();
+G.jobs.complete();
+if (G.cartel.hireDealer) G.cartel.hireDealer('district-inexistant');
+console.log('regression arrestation/mort OK');
+
 console.log('--- t26: newGame reset complet');
 G.newGame();
 if (G.jobs.active || G.jobs.done !== 0) throw new Error('jobs not reset');

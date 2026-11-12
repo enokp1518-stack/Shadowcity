@@ -62,6 +62,7 @@
 
   J.complete = function () {
     const a = J.active;
+    if (!a) return;
     const pay = a.def.pay + G.player.level * 25;
     G.eco.earn(pay, true);
     G.addXP(40 + a.total * 10);

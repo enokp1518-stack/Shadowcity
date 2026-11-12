@@ -180,6 +180,14 @@ Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'
 
 **Beauté Ultime v1.1** (ciel shader + oiseaux, coudes/genoux/mains/chaussures, coups de poing réels avec particules, voitures laquées, halos de lampadaires, ombres 2048) et **Beauté Ultra** (visages détaillés, 5 expressions, dialogues avec voix et lip sync, sol détaillé, rendu cinéma ACES, SC-Upscale type DLSS, mobilier urbain) complètent le tableau : **plus de 60 nouveautés** au total.
 
+## 🛠 Corrections de bugs (audit complet)
+
+- **CRASH critique corrigé** : se faire arrêter (ou éliminer) par la police gelait le jeu — la liste des PNJ était vidée pendant sa propre boucle de mise à jour. Garde ajoutée + test de régression dédié (arrestation et mort déclenchées en pleine boucle)
+- **Job terminé** : garde null sur la validation d'un job déjà annulé
+- **Dealers** : messages de recrutement/fourniture sécurisés si le territoire est inconnu
+- **Tests robustifiés** : hitscan sur route dégagée, marques de skid détectées par durée de vie, avion de ligne réinitialisé avant vérification
+- **Audit statique complet** : toutes les références G.*/U.*/W.* vérifiées, tous les ids HTML confirmés, toutes les classes CSS utilisées par le JS existent, toutes les actions du téléphone testées, stress test 2000 frames avec événements aléatoires (pluie, nuit, wanted, explosions, klaxon, kills) — 0 erreur
+
 ## 🎨 Design continu — série 4 (updates 46-56)
 
 - **Parapluies** : les passants (35%) ouvrent leur parapluie coloré dès qu'il pleut

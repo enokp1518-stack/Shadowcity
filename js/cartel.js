@@ -287,7 +287,8 @@
     if (C.dealers.find(d => d.district === districtId)) return;
     if (!G.eco.spend(8000)) return;
     C.dealers.push({ district: districtId, stock: 0 });
-    G.ui.toast('🕵️ Dealer recruté : ' + G.world.districts.find(d => d.id === districtId).name, 'money');
+    const dd = G.world.districts.find(d => d.id === districtId);
+    G.ui.toast('🕵️ Dealer recruté' + (dd ? ' : ' + dd.name : ''), 'money');
     G.sfx.buy();
   };
 
@@ -302,7 +303,8 @@
     const n = Math.min(10, C.products[bestId].qty);
     C.products[bestId].qty -= n;
     d.stock += n;
-    G.ui.toast('📦 ' + n + ' unités fournies au dealer (' + G.world.districts.find(x => x.id === d.district).name + ')', 'money');
+    const dsup = G.world.districts.find(x => x.id === d.district);
+    G.ui.toast('📦 ' + n + ' unités fournies au dealer' + (dsup ? ' (' + dsup.name + ')' : ''), 'money');
   };
 
   C.launder = function (amount) {
