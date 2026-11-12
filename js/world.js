@@ -751,6 +751,20 @@
   W.fogFar = 420;
   let rainPts = null, rainGeo = null;
 
+  function buildPuddles() {
+    W.puddles = [];
+    const geo = new THREE.CircleGeometry(1, 12);
+    for (let k = 0; k < 26; k++) {
+      const pt = W.randRoadPoint();
+      const pm = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0x3a5a8a, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+      pm.rotation.x = -Math.PI / 2;
+      pm.scale.set(U.rand(1.2, 2.6), U.rand(0.8, 1.8), 1);
+      pm.position.set(pt.x + U.rand(-2, 2), 0.045, pt.z + U.rand(-2, 2));
+      G.scene.add(pm);
+      W.puddles.push(pm);
+    }
+  }
+
   function buildRain() {
     const N = 900;
     rainGeo = new THREE.BufferGeometry();
@@ -791,6 +805,7 @@
     buildMoonGlow();
     buildStars();
     buildFireflies();
+    buildPuddles();
     buildRain();
 
     W.sunDisc = new THREE.Mesh(new THREE.SphereGeometry(22, 16, 12),
@@ -897,6 +912,10 @@
       R.next = R.active ? U.rand(60, 150) : U.rand(120, 300);
       if (G.state.screen === 'play') G.ui.toast(R.active ? '🌧️ La pluie s\'abat sur Shadow City...' : '☀️ Le ciel se dégage.');
       G.sfx.rainLoop(R.active);
+    }
+    if (W.puddles) {
+      const po = R.active ? 0.26 + Math.sin(performance.now() / 1000 * 0.8) * 0.05 : 0;
+      for (const pd of W.puddles) pd.material.opacity = po;
     }
     if (R.active) {
       tmpC.multiplyScalar(0.55);
