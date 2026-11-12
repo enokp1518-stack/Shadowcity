@@ -577,6 +577,10 @@
       ctx.fillStyle = '#ffd23e';
       ctx.beginPath(); ctx.arc(sm.x, sm.z, 12, 0, Math.PI * 2); ctx.fill();
     }
+    for (const pk of G.pickups) {
+      ctx.fillStyle = pk.heal ? '#ff4d6d' : '#cfe84a';
+      ctx.beginPath(); ctx.arc(pk.obj.position.x, pk.obj.position.z, 6, 0, Math.PI * 2); ctx.fill();
+    }
     for (const n of G.npcs) {
       if (n.dead) continue;
       if (n.type === 'cop' || (G.eco.hasPet('falcon') && (n.type === 'creature' || n.aggro || n.warTag))) {

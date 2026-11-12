@@ -282,6 +282,13 @@
       const el = (car.def.l || 4.6) / 2 + 0.3;
       G.spawnBurst(car.obj.position.x - fx * el, 0.45, car.obj.position.z - fz * el, 0x5a6068, 1);
     }
+    if (car.hp < car.maxHp * 0.3) {
+      car.dmgT = (car.dmgT || 0) - dt;
+      if (car.dmgT <= 0) {
+        car.dmgT = 0.28;
+        G.spawnBurst(car.obj.position.x + fx * 1.4, 0.9, car.obj.position.z + fz * 1.4, car.hp < car.maxHp * 0.15 ? 0x2a2c30 : 0x6a7078, 1);
+      }
+    }
 
     for (const n of G.npcs) {
       if (n.dead) continue;
