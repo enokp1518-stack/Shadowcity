@@ -306,6 +306,16 @@
       x.arc(Math.random() * res, Math.random() * res, 2.5 * px, 0, Math.PI * 2);
       x.fill();
     }
+    x.strokeStyle = 'rgba(255,255,255,0.22)';
+    x.lineWidth = Math.max(1, 0.25 * px);
+    for (let i = 0; i <= W.GRID; i++) {
+      const rp = W.roadCoord(i);
+      for (const off of [-W.ROAD / 2 + 0.9, W.ROAD / 2 - 0.9]) {
+        const q = w2c(rp + off);
+        x.beginPath(); x.moveTo(q, 0); x.lineTo(q, res); x.stroke();
+        x.beginPath(); x.moveTo(0, q); x.lineTo(res, q); x.stroke();
+      }
+    }
     x.fillStyle = 'rgba(255,255,255,0.35)';
     for (let i = 0; i <= W.GRID; i++) for (let j = 0; j <= W.GRID; j++) {
       const ix = W.roadCoord(i), iz = W.roadCoord(j);
@@ -329,8 +339,46 @@
     m.position.set(x, h / 2 + 0.3, z);
     m.castShadow = m.receiveShadow = true;
     G.scene.add(m);
+    if (h > 12 && Math.random() < 0.6) {
+      const ac = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.9, 1.6), W.mats.metal);
+      ac.position.set(x + U.rand(-w / 4, w / 4), h + 0.75, z + U.rand(-d / 4, d / 4));
+      ac.castShadow = true;
+      G.scene.add(ac);
+    }
     W.addCollider(x - w / 2, z - d / 2, x + w / 2, z + d / 2, h);
     return m;
+  }
+
+  const adCache = {};
+  function adTex(i) {
+    if (adCache[i]) return adCache[i];
+    const c = document.createElement('canvas');
+    c.width = 256; c.height = 128;
+    const x = c.getContext('2d');
+    const ads = [
+      ['#e0315b', 'SHADOW COLA', '#ffe066'],
+      ['#0b7285', 'NEON FM 103', '#a5f3fc'],
+      ['#2b2f3a', "ARSENE'S GUNS", '#ffd23e'],
+      ['#5f3dc4', 'CITY RACE GP', '#d0bfff']
+    ];
+    const ad = ads[i % ads.length];
+    x.fillStyle = ad[0]; x.fillRect(0, 0, 256, 128);
+    x.fillStyle = ad[2]; x.font = 'bold 26px sans-serif'; x.textAlign = 'center';
+    x.fillText(ad[1], 128, 74);
+    x.strokeStyle = ad[2]; x.lineWidth = 6; x.strokeRect(8, 8, 240, 112);
+    const t = new THREE.CanvasTexture(c);
+    adCache[i] = t;
+    return t;
+  }
+
+  function billboard(x, y, z, ry) {
+    const pole = new THREE.Mesh(new THREE.BoxGeometry(0.4, 4, 0.4), W.mats.metal);
+    pole.position.set(x, y + 2, z);
+    const t = adTex(U.randi(0, 3));
+    const panel = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.5), new THREE.MeshLambertMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.25 }));
+    panel.position.set(x, y + 5.5, z);
+    panel.rotation.y = ry;
+    G.scene.add(pole, panel);
   }
 
   function neonSign(x, y, z, ry, color, w, h) {
@@ -459,6 +507,47 @@
   }
 
   W.rain = { active: false, next: U.rand(90, 240) };
+  function buildSmokestacks() {
+    W.smokes = [];
+    const smokeGeo = new THREE.SphereGeometry(1.6, 8, 6);
+    for (let k = 0; k < 5; k++) {
+      const cell = W.cellCenter(6 + U.randi(0, 3), U.randi(0, 3));
+      const chim = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1, 7, 8), W.mats.dark);
+      chim.position.set(cell.x + U.rand(-10, 10), 3.5, cell.z + U.rand(-10, 10));
+      G.scene.add(chim);
+      for (let m = 0; m < 3; m++) {
+        const puff = new THREE.Mesh(smokeGeo, new THREE.MeshLambertMaterial({ color: 0x9aa0a8, transparent: true, opacity: 0.3 }));
+        puff.position.set(chim.position.x, 8, chim.position.z);
+        puff.userData.smokeT = m * 2.2;
+        G.scene.add(puff);
+        W.smokes.push(puff);
+      }
+    }
+  }
+
+  function buildTrafficLights() {
+    W.trafficLights = [];
+    const mats = {
+      redOn: new THREE.MeshBasicMaterial({ color: 0xff2222 }), redOff: new THREE.MeshBasicMaterial({ color: 0x3a1010 }),
+      greenOn: new THREE.MeshBasicMaterial({ color: 0x2fd46e }), greenOff: new THREE.MeshBasicMaterial({ color: 0x103a1c })
+    };
+    for (let k = 0; k < 10; k++) {
+      const ix = W.roadCoord(U.randi(1, W.GRID - 1)), iz = W.roadCoord(U.randi(1, W.GRID - 1));
+      const corner = U.pick([[7.5, 7.5], [-7.5, 7.5], [7.5, -7.5], [-7.5, -7.5]]);
+      const tx = ix + corner[0], tz = iz + corner[1];
+      const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 5.2, 6), W.mats.metal);
+      pole.position.set(tx, 2.6, tz);
+      const head = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.3, 0.4), W.mats.dark);
+      head.position.set(tx, 5.2, tz);
+      const rl = new THREE.Mesh(new THREE.SphereGeometry(0.14, 6, 6), mats.redOn);
+      rl.position.set(tx, 5.6, tz + 0.22);
+      const gl = new THREE.Mesh(new THREE.SphereGeometry(0.14, 6, 6), mats.greenOff);
+      gl.position.set(tx, 4.9, tz + 0.22);
+      G.scene.add(pole, head, rl, gl);
+      W.trafficLights.push({ rl, gl, mats });
+    }
+  }
+
   function buildProps() {
     const trunkGeo = new THREE.CylinderGeometry(0.18, 0.26, 2.2, 6);
     const trunkMat = new THREE.MeshLambertMaterial({ color: 0x5a3d28 });
@@ -484,13 +573,26 @@
       const oz = U.rand(-W.BLOCK / 2 + 4, W.BLOCK / 2 - 4);
       const px2 = cc.x + ox, pz2 = cc.z + oz;
       if (dist.id === 'residential') {
-        const tr = new THREE.Mesh(trunkGeo, trunkMat);
-        tr.position.set(px2, 1.1, pz2); tr.castShadow = true;
-        G.scene.add(tr);
-        const lf = new THREE.Mesh(leafGeo, Math.random() < 0.5 ? leafMatA : leafMatB);
-        lf.position.set(px2, 3.2, pz2); lf.castShadow = true;
-        G.scene.add(lf);
-        W.addCollider(px2 - 0.3, pz2 - 0.3, px2 + 0.3, pz2 + 0.3, 2);
+        if (Math.random() < 0.3) {
+          const mp = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.1, 0.12), W.mats.trunk);
+          mp.position.set(px2, 0.55, pz2);
+          const mb = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.35, 0.35), new THREE.MeshLambertMaterial({ color: 0x2271cc }));
+          mb.position.set(px2, 1.2, pz2);
+          G.scene.add(mp, mb);
+        } else {
+          const tr = new THREE.Mesh(trunkGeo, trunkMat);
+          tr.position.set(px2, 1.1, pz2); tr.castShadow = true;
+          G.scene.add(tr);
+          const lf = new THREE.Mesh(leafGeo, Math.random() < 0.5 ? leafMatA : leafMatB);
+          lf.position.set(px2, 3.2, pz2); lf.castShadow = true;
+          G.scene.add(lf);
+          W.addCollider(px2 - 0.3, pz2 - 0.3, px2 + 0.3, pz2 + 0.3, 2);
+        }
+      } else if (dist.id === 'docks' && Math.random() < 0.5) {
+        const cont = new THREE.Mesh(new THREE.BoxGeometry(5, 2.4, 2.3), new THREE.MeshLambertMaterial({ color: U.pick([0xe03131, 0x1971c2, 0x2f9e44, 0xe8590c]) }));
+        cont.position.set(px2, 1.2, pz2); cont.castShadow = true; cont.rotation.y = U.rand(0, 3);
+        G.scene.add(cont);
+        W.addCollider(px2 - 2.4, pz2 - 2.4, px2 + 2.4, pz2 + 2.4, 2.4);
       } else if (dist.id === 'industrial' || dist.id === 'docks') {
         const m = new THREE.Mesh(Math.random() < 0.5 ? crateGeo : barrelGeo, Math.random() < 0.5 ? crateMat : barrelMat);
         m.position.set(px2, 0.7, pz2); m.castShadow = true; m.rotation.y = U.rand(0, 3);
@@ -498,11 +600,29 @@
         W.addCollider(px2 - 0.5, pz2 - 0.5, px2 + 0.5, pz2 + 0.5, 1.4);
       } else {
         const r = Math.random();
-        if (r < 0.4) {
+        if (dist.id === 'downtown' && r < 0.18) {
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.8, 0.7, 14), W.mats.sidewalk);
+          base.position.set(px2, 0.55, pz2);
+          const water = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 0.5, 14), new THREE.MeshPhongMaterial({ color: 0x2a8fd8, transparent: true, opacity: 0.75, shininess: 120 }));
+          water.position.set(px2, 0.9, pz2);
+          const jet = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.3, 1.6, 8), W.mats.metal);
+          jet.position.set(px2, 1.8, pz2);
+          G.scene.add(base, water, jet);
+          W.fountains.push(water);
+          W.addCollider(px2 - 2.6, pz2 - 2.6, px2 + 2.6, pz2 + 2.6, 1);
+        } else if (dist.id === 'downtown' && r < 0.32) {
+          const pole2 = new THREE.Mesh(new THREE.BoxGeometry(0.15, 3, 0.15), W.mats.metal);
+          pole2.position.set(px2, 1.5, pz2);
+          const roof2 = new THREE.Mesh(new THREE.BoxGeometry(3.4, 0.15, 1.4), W.mats.dark);
+          roof2.position.set(px2 + 1.5, 3, pz2);
+          const seat2 = new THREE.Mesh(new THREE.BoxGeometry(2.8, 0.1, 0.5), benchMat);
+          seat2.position.set(px2 + 1.2, 0.6, pz2);
+          G.scene.add(pole2, roof2, seat2);
+        } else if (r < 0.55) {
           const b = new THREE.Mesh(binGeo, binMat);
           b.position.set(px2, 0.5, pz2); b.castShadow = true;
           G.scene.add(b);
-        } else if (r < 0.7) {
+        } else if (r < 0.75) {
           const h = new THREE.Mesh(hydGeo, hydMat);
           h.position.set(px2, 0.35, pz2); h.castShadow = true;
           G.scene.add(h);
@@ -532,6 +652,8 @@
       G.scene.add(W.sunGlow);
     } catch (e) { W.sunGlow = null; }
   }
+
+  W.fountains = [];
 
   W.fogFar = 420;
   let rainPts = null, rainGeo = null;
@@ -570,6 +692,8 @@
     for (let i = 0; i < W.GRID; i++) for (let j = 0; j < W.GRID; j++) buildBlock(i, j);
     buildStreetlights();
     buildProps();
+    buildSmokestacks();
+    buildTrafficLights();
     buildSunGlow();
     buildStars();
     buildRain();
@@ -735,6 +859,27 @@
         b.rotation.y = -f.a;
         b.rotation.z = Math.sin(bt * 9 + f.ph) * 0.55;
       }
+    }
+    if (W.smokes) {
+      for (const sm of W.smokes) {
+        sm.userData.smokeT = (sm.userData.smokeT + dt * 0.85) % 6;
+        const k = sm.userData.smokeT;
+        sm.position.y = 8 + k * 2.4;
+        sm.scale.setScalar(0.6 + k * 0.35);
+        sm.material.opacity = 0.32 * (1 - k / 6);
+      }
+    }
+    if (W.trafficLights) {
+      const cyc = (performance.now() / 1000) % 10;
+      const green = cyc < 4.5;
+      for (const tl of W.trafficLights) {
+        tl.rl.material = green ? tl.mats.redOff : tl.mats.redOn;
+        tl.gl.material = green ? tl.mats.greenOn : tl.mats.greenOff;
+      }
+    }
+    if (W.fountains.length) {
+      const ft = performance.now() / 1000;
+      for (const w of W.fountains) w.position.y = 0.9 + Math.sin(ft * 2.4) * 0.05;
     }
     if (W.clouds) {
       W.cloudMat.opacity = (W.rain.active ? 0.85 : 0.5) - nf * 0.32;
