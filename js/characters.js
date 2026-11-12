@@ -83,19 +83,33 @@
       hm.position.y = 0.24;
       head.add(hm);
     }
-    function limb(w, len, px, py, matl) {
+    function limb(w, ulen, llen, px, py, matl, endColor, endW) {
       const pivot = new THREE.Group();
       pivot.position.set(px, py, 0);
-      const m = new THREE.Mesh(new THREE.BoxGeometry(w, len, w), matl);
-      m.position.y = -len / 2 + 0.05;
-      m.castShadow = true;
-      pivot.add(m);
+      const upper = new THREE.Mesh(new THREE.BoxGeometry(w, ulen, w), matl);
+      upper.position.y = -ulen / 2 + 0.05;
+      upper.castShadow = true;
+      pivot.add(upper);
+      const joint = new THREE.Group();
+      joint.position.y = -ulen + 0.05;
+      const lower = new THREE.Mesh(new THREE.BoxGeometry(w * 0.85, llen, w * 0.85), matl);
+      lower.position.y = -llen / 2 + 0.02;
+      lower.castShadow = true;
+      joint.add(lower);
+      if (endColor !== null) {
+        const end = new THREE.Mesh(new THREE.BoxGeometry(w * (endW || 1.05), 0.15, w * 1.5), new THREE.MeshLambertMaterial({ color: endColor }));
+        end.position.y = -llen - 0.03;
+        joint.add(end);
+      }
+      pivot.add(joint);
+      pivot.userData.joint = joint;
       return pivot;
     }
-    const lArm = limb(0.2, 0.75, -0.46, 1.5, mat);
-    const rArm = limb(0.2, 0.75, 0.46, 1.5, mat);
-    const lLeg = limb(0.24, 0.8, -0.18, 0.75, new THREE.MeshLambertMaterial({ color: 0x2a2f3a }));
-    const rLeg = limb(0.24, 0.8, 0.18, 0.75, new THREE.MeshLambertMaterial({ color: 0x2a2f3a }));
+    const skinHex = o.skin || 0xd9a066;
+    const lArm = limb(0.2, 0.4, 0.38, -0.46, 1.5, mat, o.hands === false ? null : skinHex);
+    const rArm = limb(0.2, 0.4, 0.38, 0.46, 1.5, mat, o.hands === false ? null : skinHex);
+    const lLeg = limb(0.24, 0.4, 0.42, -0.18, 0.75, new THREE.MeshLambertMaterial({ color: 0x2a2f3a }), o.feet === false ? null : 0x14161a, 1.2);
+    const rLeg = limb(0.24, 0.4, 0.42, 0.18, 0.75, new THREE.MeshLambertMaterial({ color: 0x2a2f3a }), o.feet === false ? null : 0x14161a, 1.2);
     g.add(body, head, lArm, rArm, lLeg, rLeg);
     if (scale) g.scale.setScalar(scale);
     g.userData.anim = { lArm, rArm, lLeg, rLeg, head, body };
@@ -126,6 +140,12 @@
     a.rLeg.rotation.x = -s * amp;
     a.lArm.rotation.x = -s * amp * 0.8;
     a.rArm.rotation.x = s * amp * 0.8;
+    const bend = moving ? (run ? 1.15 : 0.7) : 0.1;
+    a.lLeg.userData.joint.rotation.x = Math.max(0, -s) * bend;
+    a.rLeg.userData.joint.rotation.x = Math.max(0, s) * bend;
+    const eb = moving ? (run ? 0.85 : 0.5) : 0.22;
+    a.lArm.userData.joint.rotation.x = -Math.max(0, s) * eb - 0.12;
+    a.rArm.userData.joint.rotation.x = Math.max(0, -s) * eb - 0.12;
     a.body.position.y = 1.15 + (moving ? Math.abs(s) * 0.05 : 0);
     a.body.scale.y = moving ? 1 : 1 + Math.sin(t * 2.2) * 0.012;
   }
@@ -200,7 +220,10 @@
     }
     p.animT += dt;
     animWalk(p.obj, mag > 0.1, p.animT, sprint);
-    if (p.aiming) p.obj.userData.anim.rArm.rotation.x = -Math.PI / 2;
+    if (p.aiming) {
+      p.obj.userData.anim.rArm.rotation.x = -Math.PI / 2;
+      p.obj.userData.anim.rArm.userData.joint.rotation.x = -0.08;
+    }
 
     G.stats.distance += Math.hypot(p.vel.x, p.vel.z) * dt;
 
