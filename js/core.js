@@ -2,6 +2,7 @@
 window.G = {
   version: '1.0.0',
   DEV_PAYPAL: '',
+  DEV_DONATE_URL: '',
   scene: null, camera: null, renderer: null, clock: null,
   settings: { quality: 'hd', shadows: true, sound: true, sens: 1.0, removeAds: false, outfit: 0x2f9bff },
   state: { screen: 'menu', mode: 'story', time: 9.0, paused: false, fps: 60, resScale: 1, lastCrime: -99, wasted: false, kills: 0, achievements: [], sirenOn: false },

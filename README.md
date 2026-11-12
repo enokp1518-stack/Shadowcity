@@ -122,6 +122,10 @@ Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'
 2. Ouvre `js/core.js` et remplace la ligne `DEV_PAYPAL: ''` par `DEV_PAYPAL: 'ton-nom'` (le nom dans `paypal.me/ton-nom`)
 3. Publie — les boutons « Payer 5€ » et « Donner » (Réglages > Portefeuille créateur) ouvrent ton PayPal
 
+**Rester anonyme** : PayPal ne permet plus de renommer son lien paypal.me. Deux options :
+- `DEV_DONATE_URL` (dans `js/core.js`) : mets une URL complète de page de don sous pseudonyme (ex : page Ko-fi `https://ko-fi.com/tonpseudo`, Liberapay, etc.). Si cette variable est remplie, elle est utilisée en priorité pour les boutons « Payer 5€ » et « Donner » — ton vrai nom n'apparaît jamais.
+- Compte PayPal **Business** gratuit avec un nom d'entreprise (ex : « Shadow City Studio ») : les acheteurs voient le nom de l'entreprise au lieu du tien.
+
 **Important** : le jeu étant 100% statique (sans serveur), l'activation du Premium après paiement se fait via le bouton « J'ai payé » (système d'honneur). Pour une validation automatique du paiement, il faudrait un serveur + un compte PayPal Business avec webhook — hors périmètre d'un site statique.
 
 ## ⚙️ Optimisation mobile
