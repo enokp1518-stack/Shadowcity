@@ -3,6 +3,27 @@
   const C = {};
   G.combat = C;
 
+  C.dmgNums = [];
+  let dmgBox = null;
+  function ensureDmgBox() {
+    if (dmgBox || !document.body || !document.body.appendChild) return;
+    dmgBox = document.createElement('div');
+    dmgBox.id = 'dmgnums';
+    document.body.appendChild(dmgBox);
+  }
+  C.dmgNum = function (x, y, z, txt, color) {
+    ensureDmgBox();
+    let el = null;
+    if (dmgBox) {
+      el = document.createElement('div');
+      el.className = 'dmgnum';
+      if (color) el.style.color = color;
+      el.textContent = txt;
+      dmgBox.appendChild(el);
+    }
+    C.dmgNums.push({ el, p: G.V3(x, y, z), t: 0 });
+  };
+
   C.WEAPONS = {
     fists: { name: 'Poings', type: 'melee', dmg: 12, rate: 0.45, range: 1.9, price: 0, desc: 'Vos poings. Gratuits mais courageux.' },
     bat: { name: 'Batte cloutée', type: 'melee', dmg: 30, rate: 0.6, range: 2.4, price: 800, desc: 'Classique des rues.' },
@@ -212,6 +233,13 @@
     s.position.copy(pos);
     G.scene.add(s);
     G.effects.push({ obj: s, ttl: 0.4, grow: radius });
+    for (let k = 0; k < 6; k++) {
+      const sm = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.55, 0.55),
+        new THREE.MeshBasicMaterial({ color: 0x3a3d42, transparent: true, opacity: 0.55 }));
+      sm.position.set(pos.x + U.rand(-0.8, 0.8), pos.y + U.rand(0.4, 1.4), pos.z + U.rand(-0.8, 0.8));
+      G.scene.add(sm);
+      G.effects.push({ obj: sm, ttl: U.rand(0.9, 1.3), vel: new THREE.Vector3(U.rand(-1.1, 1.1), U.rand(3, 5.5), U.rand(-1.1, 1.1)) });
+    }
 
     for (const n of G.npcs) {
       if (n.dead) continue;
@@ -346,6 +374,26 @@
     }
     if (G.input.fire && G.state.screen === 'play' && !G.state.paused) C.fire();
     if (G.input.pulse('weapon')) C.cycleWeapon();
+
+    for (let i = C.dmgNums.length - 1; i >= 0; i--) {
+      const d = C.dmgNums[i];
+      d.t += dt;
+      d.p.y += dt * 1.6;
+      if (d.el && G.camera) {
+        const v = d.p.clone();
+        v.project(G.camera);
+        if (v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1) {
+          d.el.style.display = 'block';
+          d.el.style.left = ((v.x * 0.5 + 0.5) * 100) + '%';
+          d.el.style.top = ((-v.y * 0.5 + 0.5) * 100) + '%';
+          d.el.style.opacity = Math.max(0, 1 - d.t / 0.9);
+        } else d.el.style.display = 'none';
+      }
+      if (d.t > 0.9) {
+        if (d.el && d.el.remove) d.el.remove();
+        C.dmgNums.splice(i, 1);
+      }
+    }
 
     for (let i = G.effects.length - 1; i >= 0; i--) {
       const e = G.effects[i];

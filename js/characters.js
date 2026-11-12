@@ -262,7 +262,8 @@
         pk.obj.position.z = U.lerp(pk.obj.position.z, p.pos.z, 0.15);
       }
       if (d2 < 2.5) {
-        G.eco.earn(pk.amount);
+        if (pk.heal) { G.player.hp = Math.min(G.player.maxHp, G.player.hp + pk.heal); G.sfx.buy(); }
+        else G.eco.earn(pk.amount);
         G.scene.remove(pk.obj);
         G.pickups.splice(i, 1);
       }
@@ -370,9 +371,18 @@
     npc.aggro = true;
     npc.state = 'chase';
     G.sfx.hit();
+    if (G.combat.dmgNum) {
+      const dn = Math.max(1, Math.round(dmg));
+      G.combat.dmgNum(npc.obj.position.x, npc.obj.position.y + 1.9 * (npc.obj.scale.y || 1) + U.rand(0, 0.4), npc.obj.position.z, headshot ? dn + ' !' : '' + dn, headshot ? '#ffd23e' : '#ff6b57');
+    }
     if (npc.hp <= 0) {
       npc.dead = true; npc.deadT = 0;
       G.stats.kills++;
+      const nowS = performance.now() / 1000;
+      G.state.streak = (G.state.lastKillT && nowS - G.state.lastKillT < 5) ? (G.state.streak || 0) + 1 : 1;
+      G.state.lastKillT = nowS;
+      if (G.state.streak >= 3 && G.state.streak % 3 === 0) G.ui.toast('🔥 Série de ' + G.state.streak + ' \u00e9liminations !', 'money');
+      if (Math.random() < 0.08) G.spawnHeal(npc.obj.position.x, npc.obj.position.z);
       if (headshot) G.stats.headshots++;
       G.addXP(npc.boss ? 500 : npc.type === 'creature' ? 25 : npc.type === 'cop' ? 40 : 20);
       G.state.kills++;
@@ -400,6 +410,21 @@
     m.position.set(x, 0.6, z);
     G.scene.add(m);
     G.pickups.push({ obj: m, amount, magnet: G.eco.hasPet('dog') || G.eco.hasPet('robotcat') });
+  };
+
+  G.spawnHeal = function (x, z) {
+    const g = new THREE.Group();
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.4, 0.55),
+      new THREE.MeshBasicMaterial({ color: 0xe8eef2 }));
+    const c1 = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.42, 0.12),
+      new THREE.MeshBasicMaterial({ color: 0xe23b3b }));
+    const c2 = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.42, 0.3),
+      new THREE.MeshBasicMaterial({ color: 0xe23b3b }));
+    c1.position.y = 0.21; c2.position.y = 0.21;
+    g.add(box, c1, c2);
+    g.position.set(x, 0.6, z);
+    G.scene.add(g);
+    G.pickups.push({ obj: g, heal: 40, magnet: G.eco.hasPet('dog') || G.eco.hasPet('robotcat') });
   };
 
   function npcShoot(npc) {
