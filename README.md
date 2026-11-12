@@ -180,6 +180,19 @@ Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'
 
 **Beauté Ultime v1.1** (ciel shader + oiseaux, coudes/genoux/mains/chaussures, coups de poing réels avec particules, voitures laquées, halos de lampadaires, ombres 2048) et **Beauté Ultra** (visages détaillés, 5 expressions, dialogues avec voix et lip sync, sol détaillé, rendu cinéma ACES, SC-Upscale type DLSS, mobilier urbain) complètent le tableau : **plus de 60 nouveautés** au total.
 
+## 🎨 Design continu — série 4 (updates 46-56)
+
+- **Parapluies** : les passants (35%) ouvrent leur parapluie coloré dès qu'il pleut
+- **Feux d'artifice** : explosions colorées régulières dans le ciel du Neon Strip la nuit
+- **Food trucks** : camions-restaurants colorés avec enseignes lumineuses et auvents à Downtown
+- **Asphalte mouillé** : le sol devient brillant et sombre sous la pluie
+- **Chiens et chats errants** : 8 animaux qui se promènent, queues animées, fuient le joueur
+- **Feux de détresse** : clignotants orange sur toutes les épaves
+- **Bus Cityliner** : circulation dans le trafic avec livrée SHADOW TRANSIT et destination lumineuse
+- **Feux arrière automatiques** : toutes les voitures allument leurs feux rouges dès la nuit
+- **Étals du Neon Strip** : stands de rue avec enseignes néon et braseros vacillants
+- **Éclats de vitre** : débris bleutés qui voltigent à chaque explosion
+
 ## 🎨 Design continu — série 3 (updates 32-44)
 
 - **NITRO** (Maj) : surpuissance temporaire, flammes à l'échappement, FOV boosté
