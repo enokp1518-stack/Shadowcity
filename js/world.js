@@ -865,6 +865,51 @@
     }
   }
 
+  function buildBanners() {
+    for (let k = 0; k < 10; k++) {
+      const i = 4 + U.randi(0, 2), j = 4 + U.randi(0, 2);
+      const cc = W.cellCenter(i, j);
+      const side = U.randi(0, 4);
+      const off = W.BLOCK / 2 + 0.35;
+      let x = cc.x, z = cc.z, ry = 0;
+      if (side === 0) { x += off; ry = -Math.PI / 2; }
+      else if (side === 1) { x -= off; ry = Math.PI / 2; }
+      else if (side === 2) { z += off; ry = Math.PI; }
+      else { z -= off; ry = 0; }
+      const hgt = U.rand(4.5, 8);
+      const t = adTex(U.randi(0, 3));
+      const b = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 1.6), new THREE.MeshLambertMaterial({ map: t, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: 0.35, side: THREE.DoubleSide }));
+      b.position.set(x, hgt, z);
+      b.rotation.y = ry;
+      b.rotation.z = U.rand(-0.06, 0.06);
+      G.scene.add(b);
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 4.7, 5), W.mats.metal);
+      bar.rotation.z = Math.PI / 2;
+      bar.position.set(x, hgt + 0.95, z);
+      bar.rotation.y = ry;
+      G.scene.add(bar);
+    }
+  }
+
+  function buildPigeons() {
+    W.pigeons = [];
+    const geo = new THREE.SphereGeometry(0.13, 6, 5);
+    const mat = new THREE.MeshLambertMaterial({ color: 0x8b93a1 });
+    for (let k = 0; k < 14; k++) {
+      const pt = W.randRoadPoint();
+      const f = new THREE.Mesh(geo, mat);
+      f.scale.set(1, 0.8, 1.35);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.07, 5, 4), mat);
+      head.position.set(0, 0.1, 0.12);
+      f.add(head);
+      f.position.set(pt.x + U.rand(-3, 3), 0.14, pt.z + U.rand(-3, 3));
+      f.userData.wt = U.rand(0, 3);
+      f.userData.fly = 0;
+      G.scene.add(f);
+      W.pigeons.push(f);
+    }
+  }
+
   function buildSteamVents() {
     W.steam = [];
     const puffGeo = new THREE.SphereGeometry(0.7, 7, 5);
@@ -1007,6 +1052,8 @@
     buildFireflies();
     buildPuddles();
     buildSteamVents();
+    buildBanners();
+    buildPigeons();
     buildRain();
 
     W.sunDisc = new THREE.Mesh(new THREE.SphereGeometry(22, 16, 12),
@@ -1211,6 +1258,33 @@
       const pc = G.player && G.player.pos ? W.districtAt(G.player.pos.x, G.player.pos.z) : 'downtown';
       G.sfx.cricketVol(nf * (pc === 'residential' ? 1 : 0.25));
       if (nf > 0.15) G.sfx.crickets(true);
+    }
+    if (W.pigeons) {
+      const pp = G.player ? G.player.pos : null;
+      const pt2 = performance.now() / 1000;
+      for (const pg of W.pigeons) {
+        if (pg.userData.fly > 0) {
+          pg.userData.fly -= dt;
+          pg.position.y = 0.14 + Math.sin((2 - pg.userData.fly) * 4) * 0.4 + (2 - pg.userData.fly) * 2.2;
+          if (pg.userData.fly <= 0) {
+            pg.position.set(pp.x + U.rand(-25, 25), 0.14, pp.z + U.rand(-25, 25));
+            pg.scale.y = 0.8;
+          }
+        } else if (pp) {
+          const pd2 = U.d2(pg.position.x, pg.position.z, pp.x, pp.z);
+          if (pd2 < 20) {
+            pg.userData.fly = 2;
+            pg.scale.y = 1;
+            pg.rotation.y = Math.atan2(pp.x - pg.position.x, pp.z - pg.position.z);
+          } else {
+            pg.userData.wt -= dt;
+            if (pg.userData.wt <= 0) { pg.userData.wt = U.rand(1.5, 4); pg.rotation.y = U.rand(0, Math.PI * 2); }
+            pg.position.x += Math.sin(pg.rotation.y) * dt * 0.5;
+            pg.position.z += Math.cos(pg.rotation.y) * dt * 0.5;
+            pg.position.y = 0.14 + Math.abs(Math.sin(pt2 * 6 + pg.userData.wt)) * 0.03;
+          }
+        }
+      }
     }
     if (W.steam) {
       for (const sp of W.steam) {
