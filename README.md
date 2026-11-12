@@ -33,6 +33,7 @@ Sur mobile : « Ajouter à l'écran d'accueil » pour un rendu plein écran type
 
 ## 🗺️ Le monde
 
+- **Textures PBR raccordables** incluses dans `textures/` (kit 1024×1024, générées par `tools/genTextures.js`) : **mur en briques rouges patinées avec mousse** (diffuse + normal map) et **béton sombre rugueux mat** (diffuse + normal map). Les murs des bâtiments de la ville utilisent ces deux matières (briques patinées / béton brut) derrière les fenêtres allumées.
 - **5 quartiers** avec gangs à conquérir : Downtown (Les Fantômes), Les Docks (Crimson), Zone Industrielle (Iron Wolves), Green Heights (Les Vipères), Neon Strip (Neon Kings).
 - Trafic, piétons, police avec niveau de recherche (5 étoiles) : sème-la ou te fais **arrêter** (amende) — sirène et gyrophares quand elle est sur toi.
 - **Cycle jour/nuit complet** : soleil et lune visibles, nuages animés, fenêtres et néons qui s'allument la nuit, phares de voiture de nuit.

@@ -149,11 +149,55 @@
 
   let sun, hemi, skyColor, fog, glowMats = [], stars;
 
-  function windowTexture(litColor, wallColor) {
+  function wallPattern(x, style) {
+    if (style === 'brick') {
+      x.fillStyle = '#8f8378';
+      x.fillRect(0, 0, 128, 128);
+      const cols = ['#9c4a32', '#8a3f2c', '#a3543a', '#7c3826', '#94462f'];
+      for (let r = 0; r < 8; r++) {
+        const off = (r % 2) * 16;
+        for (let k = -1; k < 5; k++) {
+          x.fillStyle = cols[((r * 3 + k) % cols.length + cols.length) % cols.length];
+          x.fillRect(k * 32 + off, r * 16 + 2, 30, 12);
+        }
+      }
+      for (let k = 0; k < 14; k++) {
+        const px = Math.random() * 128, py = Math.random() * 128, pr = 3 + Math.random() * 9;
+        x.fillStyle = Math.random() < 0.5 ? 'rgba(30,26,24,0.28)' : 'rgba(20,18,22,0.2)';
+        for (const [ox, oy] of [[0, 0], [-128, 0], [0, -128], [-128, -128]]) {
+          x.beginPath(); x.arc(px + ox, py + oy, pr, 0, Math.PI * 2); x.fill();
+        }
+      }
+      for (let k = 0; k < 10; k++) {
+        const px = Math.random() * 128, py = Math.random() * 128, pr = 2 + Math.random() * 6;
+        x.fillStyle = Math.random() < 0.5 ? 'rgba(74,107,58,0.5)' : 'rgba(58,87,46,0.45)';
+        for (const [ox, oy] of [[0, 0], [-128, 0], [0, -128], [-128, -128]]) {
+          x.beginPath(); x.arc(px + ox, py + oy, pr, 0, Math.PI * 2); x.fill();
+        }
+      }
+    } else {
+      x.fillStyle = '#2b2e33';
+      x.fillRect(0, 0, 128, 128);
+      for (let k = 0; k < 420; k++) {
+        const px = Math.random() * 128, py = Math.random() * 128;
+        x.fillStyle = Math.random() < 0.5 ? 'rgba(58,62,68,0.5)' : 'rgba(22,24,27,0.5)';
+        x.fillRect(px, py, 1 + Math.random() * 2, 1 + Math.random() * 2);
+      }
+      for (let k = 0; k < 8; k++) {
+        const px = Math.random() * 128, py = Math.random() * 128, pr = 8 + Math.random() * 20;
+        x.fillStyle = 'rgba(12,13,15,0.18)';
+        for (const [ox, oy] of [[0, 0], [-128, 0], [0, -128], [-128, -128]]) {
+          x.beginPath(); x.arc(px + ox, py + oy, pr, 0, Math.PI * 2); x.fill();
+        }
+      }
+    }
+  }
+
+  function windowTexture(litColor, wallStyle) {
     const c = document.createElement('canvas');
     c.width = 128; c.height = 128;
     const x = c.getContext('2d');
-    x.fillStyle = wallColor; x.fillRect(0, 0, 128, 128);
+    wallPattern(x, wallStyle);
     for (let r = 0; r < 8; r++) for (let col = 0; col < 6; col++) {
       const lit = Math.random() < 0.4;
       x.fillStyle = lit ? litColor : 'rgba(10,16,30,0.9)';
@@ -175,8 +219,8 @@
     W.mats.glass = new THREE.MeshLambertMaterial({ color: 0x1c2a4a, emissive: 0x22406a, emissiveIntensity: 0.4 });
     W.buildingMats = [];
     const variants = [
-      ['#ffd98a', '#2a2d33'], ['#c9f0ff', '#24282f'], ['#ffe9b8', '#31262a'],
-      ['#d0ffd8', '#262b26'], ['#ffc9e8', '#2b2433'], ['#fff3c9', '#1f232b']
+      ['#ffd98a', 'brick'], ['#c9f0ff', 'concrete'], ['#ffe9b8', 'brick'],
+      ['#d0ffd8', 'concrete'], ['#ffc9e8', 'brick'], ['#fff3c9', 'concrete']
     ];
     for (const [lit, wall] of variants) {
       const tex = windowTexture(lit, wall);
