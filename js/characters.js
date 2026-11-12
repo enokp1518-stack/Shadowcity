@@ -306,6 +306,18 @@
       n.obj.add(bp);
     }
     const headP = n.obj.children.find(ch => ch.position.y === 1.82);
+    if (Math.random() < 0.35) {
+      const um = new THREE.Group();
+      const canopy = new THREE.Mesh(new THREE.ConeGeometry(0.75, 0.3, 8),
+        new THREE.MeshLambertMaterial({ color: U.pick([0x1971c2, 0xd9480f, 0x2f9e44, 0x495057, 0xae3ec9]) }));
+      const stick = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 1.1, 5), W.mats ? W.mats.dark : new THREE.MeshLambertMaterial({ color: 0x222 }));
+      stick.position.y = -0.55;
+      um.add(canopy, stick);
+      um.position.set(0.25, 2.35, 0);
+      um.visible = false;
+      n.obj.add(um);
+      n.umbrella = um;
+    }
     if (headP) {
       if (Math.random() < 0.2) {
         const hat = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.32, 0.1, 10),
@@ -493,8 +505,10 @@
     let copCount = 0;
     for (const n of G.npcs) if (n.type === 'cop' && !n.dead) copCount++;
 
+    const raining = G.world.rain && G.world.rain.active;
     for (let i = G.npcs.length - 1; i >= 0; i--) {
       const n = G.npcs[i];
+      if (n.umbrella) n.umbrella.visible = !!raining && !n.dead;
       if (n.dead) {
         n.deadT += dt;
         const fall = Math.min(1, n.deadT * 3.2);
