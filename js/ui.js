@@ -17,6 +17,12 @@
     while (box.children.length > 4) box.firstChild.remove();
   };
 
+  UI.lightning = function () {
+    const v = $('vignette');
+    v.style.boxShadow = 'inset 0 0 260px rgba(220,230,255,.95)';
+    setTimeout(() => { v.style.boxShadow = 'inset 0 0 120px rgba(0,0,0,.55)'; }, 120);
+  };
+
   UI.flash = function () {
     $('vignette').style.boxShadow = 'inset 0 0 160px rgba(255,0,40,.75)';
     setTimeout(() => { $('vignette').style.boxShadow = 'inset 0 0 120px rgba(0,0,0,.55)'; }, 180);

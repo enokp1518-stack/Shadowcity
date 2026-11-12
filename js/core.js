@@ -174,6 +174,7 @@ const SFX = {
   hit() { this.tone(220, 0.06, 'square', 0.12, -80); },
   step() { this.noise(0.05, 0.05, 900); },
   horn() { this.tone(310, 0.25, 'square', 0.1); this.tone(370, 0.25, 'square', 0.08); },
+  thunder() { this.noise(1.4, 0.4, 120); this.noise(0.9, 0.28, 60); },
   rainLoop(on) {
     const c = this.ensure();
     if (!c) return;

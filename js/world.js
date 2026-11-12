@@ -848,7 +848,13 @@
       if (G.state.screen === 'play') G.ui.toast(R.active ? '🌧️ La pluie s\'abat sur Shadow City...' : '☀️ Le ciel se dégage.');
       G.sfx.rainLoop(R.active);
     }
-    if (R.active) tmpC.multiplyScalar(0.55);
+    if (R.active) {
+      tmpC.multiplyScalar(0.55);
+      if (Math.random() < dt * 0.06 && G.ui.lightning) {
+        G.ui.lightning();
+        setTimeout(() => G.sfx.thunder(), U.randi(200, 900));
+      }
+    }
     skyColor.copy(tmpC);
     fog.color.copy(tmpC);
     fog.far = W.fogFar * (R.active ? 0.5 : 1);
