@@ -676,6 +676,38 @@ if (G.state.photoMode) throw new Error('photo mode not toggling back');
 G.settings.fps = false;
 console.log('gyrophares/dmgnums/streak/medkits/ambiance/HUD OK');
 
+console.log('--- t32: design continue — monument, grues, flaques, ombres de contact, traces de pneus');
+if (!G.world.monumentBeam) throw new Error('monument missing');
+if (!G.world.cranes || G.world.cranes.length < 2) throw new Error('cranes missing');
+if (!G.world.puddles || G.world.puddles.length < 20) throw new Error('puddles missing');
+const t32npc = G.spawnPed();
+let t32blob = false;
+t32npc.obj.traverse(o => { if (o.geometry && o.geometry.type === 'CircleGeometry') t32blob = true; });
+if (!t32blob) throw new Error('blob shadow missing');
+G.world.rain.active = true;
+frames(3);
+if (G.world.puddles[0].material.opacity <= 0) throw new Error('puddles not visible in rain');
+G.world.rain.active = false;
+frames(2);
+if (G.world.puddles[0].material.opacity !== 0) throw new Error('puddles not hidden');
+let t32pt = null;
+for (let k = 0; k < 40; k++) {
+  const cand = { x: G.world.roadCoord(U.randi(0, G.world.GRID)) + 3.5, z: U.rand(G.world.ORIGIN + 15, -G.world.ORIGIN - 15) };
+  const [rx, rz] = G.world.collideCircle(cand.x, cand.z, 2);
+  if (rx === cand.x && rz === cand.z) { t32pt = cand; break; }
+}
+if (!t32pt) t32pt = { x: G.world.roadCoord(0) + 3.5, z: 0 };
+const t32car = G.vehicles.makeCar('sport', t32pt.x, t32pt.z, 0, 0xff2d95);
+G.player.pos.set(t32pt.x, 0, t32pt.z);
+t32car.driver = 'player'; G.player.inCar = t32car; t32car.speed = 20;
+const t32fx = G.effects.length;
+G.input.keys['Space'] = true;
+frames(3);
+G.input.keys['Space'] = false;
+G.player.inCar = null; t32car.driver = null;
+if (G.effects.length <= t32fx) throw new Error('skid marks missing');
+console.log('design continue OK');
+
 console.log('--- t26: newGame reset complet');
 G.newGame();
 if (G.jobs.active || G.jobs.done !== 0) throw new Error('jobs not reset');

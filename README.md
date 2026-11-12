@@ -180,6 +180,26 @@ Le joueur peut payer le Premium (5 €) ou faire un don via **PayPal.me** — l'
 
 **Beauté Ultime v1.1** (ciel shader + oiseaux, coudes/genoux/mains/chaussures, coups de poing réels avec particules, voitures laquées, halos de lampadaires, ombres 2048) et **Beauté Ultra** (visages détaillés, 5 expressions, dialogues avec voix et lip sync, sol détaillé, rendu cinéma ACES, SC-Upscale type DLSS, mobilier urbain) complètent le tableau : **plus de 60 nouveautés** au total.
 
+## 🎨 Design continu — série 2 (updates 14-30)
+
+- **Marquage routier** : lignes centrales jaunes pointillées sur toutes les routes
+- **Véhicules** : jantes chromées, enseigne de taxi lumineuse, livrée POLICE blanche, ailerons sur les sportives, épaves qui fument longtemps
+- **Ombres de contact** sous tous les personnages (mieux ancrés au sol)
+- **Orage** : éclairs qui illuminent la ville + grondements de tonnerre
+- **Armes** : lumière de bouche à chaque tir, douilles éjectées avec gravité
+- **Végétation** : arbres à étages de feuillage (4 teintes), touffes d'herbe à Green Heights
+- **Neon Strip** : reflets colorés au sol et cônes de lumière néon sous les enseignes
+- **Piétons stylés** : chapeaux colorés et lunettes de soleil
+- **Caméra cinématique** : le champ de vision s'élargit à haute vitesse ; alerte rouge pulsante quand les PV sont bas
+- **Traces de pneus** au freinage appuyé
+- **Toits vivants** : antennes à balises rouges clignotantes, châteaux d'eau
+- **Flaques de pluie** brillantes sur les routes
+- **Grues portuaires animées** (bras pivotant, crochet suspendu)
+- **Monument de Shadow City** : obélisque éclairé par un faisceau lumineux la nuit
+- **Panneaux de rues nommés** (Rue Neon, Av. Crimson…) et cônes de chantier
+- **Vitrines de commerces** lumineuses en pied d'immeuble à Downtown
+- **Étoiles filantes** qui traversent le ciel nocturne
+
 ## 🌈 Beauté Ultime v1.1 — ciel, articulations, combat
 
 - **Ciel dégradé temps réel** : dôme shader qui suit la caméra — horizon lumineux le jour, coucher de soleil orangé, nuit profonde. 7 oiseaux planent au-dessus de la ville en battant des ailes.
