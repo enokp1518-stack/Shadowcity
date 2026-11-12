@@ -453,7 +453,6 @@
         const w = U.rand(14, 20), d = U.rand(14, 20), h = U.rand(45, 120);
         const bx = cc.x + U.rand(-10, 10), bz = cc.z + U.rand(-10, 10);
         const b = addBuilding(bx, bz, w, h, d, Math.random() < 0.5 ? W.mats.glass : U.pick(M));
-        const SHOP_NAMES = ['CAFÉ NOIR', 'BURGER', 'BANQUE', 'PHARMACIE', 'DISQUES', 'MODE', 'RAMEN', 'ARCADE'];
         for (let f = 0; f < 2; f++) {
           const sw2 = U.rand(3, 5);
           const front = new THREE.Mesh(new THREE.PlaneGeometry(sw2, 2.4),
@@ -1116,6 +1115,16 @@
       }
     }
     if (W.monumentBeam) W.monumentBeam.material.opacity = nf * 0.16;
+    if (nf > 0.5 && Math.random() < dt * 0.05) {
+      const st = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.12, 7),
+        new THREE.MeshBasicMaterial({ color: 0xeaf4ff, transparent: true, opacity: 0.9, fog: false }));
+      const a = U.rand(0, Math.PI * 2);
+      st.position.set(Math.cos(a) * 500, U.rand(160, 320), Math.sin(a) * 500);
+      st.lookAt(G.camera.position.x, st.position.y - 40, G.camera.position.z);
+      G.scene.add(st);
+      const dv = G.V3(G.camera.position.x - st.position.x, -40, G.camera.position.z - st.position.z).normalize().multiplyScalar(90);
+      G.effects.push({ obj: st, ttl: 0.9, vel: dv });
+    }
     if (W.cranes) {
       const ct = performance.now() / 1000;
       for (const cr of W.cranes) cr.arm.rotation.y = Math.sin(ct * 0.12) * 1.8;
