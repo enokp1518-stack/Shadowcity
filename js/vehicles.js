@@ -121,7 +121,7 @@
     const car = {
       obj: g, type: typeKey, def, hp: def.hp, maxHp: def.hp, speed: 0, yaw: yaw || 0, rad: def.rad || (def.bike ? 0.9 : 1.7),
       driver: null, wheels, bodyMat, wrecked: false, colorHex: c, lightbar,
-      ai: null, race: null, burnT: 0, exhT: 0, hornT: U.rand(3, 12)
+      ai: null, race: null, burnT: 0, exhT: 0, hornT: U.rand(3, 12), skidT: 0
     };
     G.cars.push(car);
     return car;
@@ -243,6 +243,22 @@
       if (G.yt.recording && Math.random() < dt * 0.5) G.yt.addEvent(40, '🏎️ Slides à fond !');
     }
     G.sfx.setEngine(car.speed);
+    car.skidT -= dt;
+    if (brake && Math.abs(car.speed) > 8 && car.skidT <= 0) {
+      car.skidT = 0.05;
+      const el2 = (car.def.l || 4.6) / 2 - 0.5;
+      const bx = car.obj.position.x - fx * el2, bz = car.obj.position.z - fz * el2;
+      const sx = fz * 0.8, sz = -fx * 0.8;
+      for (const sd of [-1, 1]) {
+        const mk = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 0.9),
+          new THREE.MeshBasicMaterial({ color: 0x0c0e12, transparent: true, opacity: 0.55, depthWrite: false }));
+        mk.rotation.x = -Math.PI / 2;
+        mk.rotation.z = -car.yaw;
+        mk.position.set(bx + sx * sd, 0.05, bz + sz * sd);
+        G.scene.add(mk);
+        G.effects.push({ obj: mk, ttl: 6 });
+      }
+    }
     car.exhT -= dt;
     if (throttle > 0.1 && car.exhT <= 0) {
       car.exhT = 0.16;
