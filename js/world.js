@@ -336,9 +336,10 @@
     }
     const tex = new THREE.CanvasTexture(c);
     tex.anisotropy = 8;
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(W.SPAN, W.SPAN), new THREE.MeshLambertMaterial({ map: tex }));
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(W.SPAN, W.SPAN), new THREE.MeshPhongMaterial({ map: tex, shininess: 4 }));
     ground.rotation.x = -Math.PI / 2;
     G.scene.add(ground);
+    W.groundMesh = ground;
     const outer = new THREE.Mesh(new THREE.PlaneGeometry(4000, 4000), new THREE.MeshLambertMaterial({ color: 0x10141c }));
     outer.rotation.x = -Math.PI / 2;
     outer.position.y = -0.2;
@@ -1209,6 +1210,10 @@
     if (W.puddles) {
       const po = R.active ? 0.26 + Math.sin(performance.now() / 1000 * 0.8) * 0.05 : 0;
       for (const pd of W.puddles) pd.material.opacity = po;
+    }
+    if (W.groundMesh) {
+      W.groundMesh.material.shininess += ((R.active ? 90 : 4) - W.groundMesh.material.shininess) * Math.min(1, dt);
+      W.groundMesh.material.color.setScalar(R.active ? 0.62 : 1);
     }
     if (R.active) {
       tmpC.multiplyScalar(0.55);
