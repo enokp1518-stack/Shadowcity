@@ -865,6 +865,78 @@
     }
   }
 
+  function buildBlimp() {
+    const g = new THREE.Group();
+    const env = new THREE.Mesh(new THREE.SphereGeometry(12, 20, 14),
+      new THREE.MeshLambertMaterial({ color: 0x9aa3ad }));
+    env.scale.set(1, 0.45, 0.45);
+    env.castShadow = true;
+    const stripe = new THREE.Mesh(new THREE.SphereGeometry(12.05, 20, 14),
+      new THREE.MeshBasicMaterial({ color: 0x2f9bff, transparent: true, opacity: 0.85 }));
+    stripe.scale.set(1, 0.16, 0.46);
+    const gondola = new THREE.Mesh(new THREE.BoxGeometry(5, 1.6, 2), W.mats.dark);
+    gondola.position.y = -6;
+    const finT = new THREE.Mesh(new THREE.BoxGeometry(0.3, 3.4, 4), W.mats.metal);
+    finT.position.set(-11, 1.6, 0);
+    const finS = new THREE.Mesh(new THREE.BoxGeometry(0.3, 4, 3), W.mats.metal);
+    finS.position.set(-11, 0, 0);
+    finS.rotation.z = Math.PI / 2;
+    const cv = document.createElement('canvas');
+    cv.width = 256; cv.height = 64;
+    const cx = cv.getContext('2d');
+    cx.fillStyle = '#0b1622'; cx.fillRect(0, 0, 256, 64);
+    cx.fillStyle = '#39c8ff'; cx.font = 'bold 34px Arial'; cx.textAlign = 'center';
+    cx.fillText('SHADOW CITY', 128, 44);
+    const signTex = new THREE.CanvasTexture(cv);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(10, 2.5),
+      new THREE.MeshBasicMaterial({ map: signTex, transparent: true, side: THREE.DoubleSide }));
+    sign.position.y = -0.5;
+    g.add(env, stripe, gondola, finT, finS, sign);
+    g.position.set(0, 90, -250);
+    G.scene.add(g);
+    W.blimp = { g, a: 0 };
+  }
+
+  function buildAirliner() {
+    const g = new THREE.Group();
+    const fus = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 1.6, 26, 10),
+      new THREE.MeshLambertMaterial({ color: 0xe8ecf2 }));
+    fus.rotation.z = Math.PI / 2;
+    const nose = new THREE.Mesh(new THREE.SphereGeometry(1.6, 10, 8),
+      new THREE.MeshLambertMaterial({ color: 0xe8ecf2 }));
+    nose.position.x = 13;
+    const tailC = new THREE.Mesh(new THREE.SphereGeometry(1.6, 10, 8),
+      new THREE.MeshLambertMaterial({ color: 0xdde3ea }));
+    tailC.position.x = -13;
+    const wing = new THREE.Mesh(new THREE.BoxGeometry(6, 0.35, 24), W.mats.metal);
+    wing.position.x = 1;
+    const tail = new THREE.Mesh(new THREE.BoxGeometry(3, 0.3, 10), W.mats.metal);
+    tail.position.x = -12;
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(3.4, 6, 0.3), new THREE.MeshLambertMaterial({ color: 0x2f6fd8 }));
+    fin.position.set(-12.5, 3.4, 0);
+    const engMat = new THREE.MeshLambertMaterial({ color: 0x8b939c });
+    for (const ex of [-6, 6]) {
+      const e1 = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.9, 3, 8), engMat);
+      e1.rotation.z = Math.PI / 2;
+      e1.position.set(0, -1, ex);
+      g.add(e1);
+    }
+    const trailMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35, depthWrite: false });
+    const trail = new THREE.Mesh(new THREE.BoxGeometry(30, 0.12, 0.12), trailMat);
+    trail.position.x = -28;
+    const trail2 = new THREE.Mesh(new THREE.BoxGeometry(30, 0.12, 0.12), trailMat);
+    trail2.position.set(-26, 0, 12);
+    const trail3 = new THREE.Mesh(new THREE.BoxGeometry(30, 0.12, 0.12), trailMat);
+    trail3.position.set(-26, 0, -12);
+    g.add(fus, nose, tailC, wing, tail, fin, trail, trail2, trail3);
+    const from = new THREE.Vector3(U.rand(-900, 900), 230, 950);
+    const to = new THREE.Vector3(U.rand(-900, 900), 230, -950);
+    g.position.copy(from);
+    g.lookAt(to);
+    G.scene.add(g);
+    W.plane = { g, from, to, t: 0, dur: from.distanceTo(to) / 60 };
+  }
+
   function buildRain() {
     const N = 900;
     rainGeo = new THREE.BufferGeometry();
@@ -908,6 +980,8 @@
     buildSmokestacks();
     buildCranes();
     buildMonument();
+    buildBlimp();
+    buildAirliner();
     buildTrafficLights();
     buildSunGlow();
     buildMoonGlow();
@@ -1128,6 +1202,26 @@
     if (W.cranes) {
       const ct = performance.now() / 1000;
       for (const cr of W.cranes) cr.arm.rotation.y = Math.sin(ct * 0.12) * 1.8;
+    }
+    if (W.blimp) {
+      W.blimp.a += dt * 0.02;
+      W.blimp.g.position.set(Math.cos(W.blimp.a) * 250, 90 + Math.sin(W.blimp.a * 2.3) * 6, Math.sin(W.blimp.a) * 250);
+      W.blimp.g.rotation.y = -W.blimp.a - Math.PI / 2;
+      W.blimp.g.rotation.z = Math.sin(W.blimp.a * 2.3) * 0.06;
+    }
+    if (W.plane) {
+      W.plane.t += dt;
+      if (W.plane.t > W.plane.dur + 20) {
+        W.plane.from.set(U.rand(-900, 900), 230, 950);
+        W.plane.to.set(U.rand(-900, 900), 230, -950);
+        W.plane.t = 0;
+        W.plane.dur = W.plane.from.distanceTo(W.plane.to) / 60;
+        W.plane.g.position.copy(W.plane.from);
+        W.plane.g.lookAt(W.plane.to);
+      } else if (W.plane.t < W.plane.dur) {
+        const k = W.plane.t / W.plane.dur;
+        W.plane.g.position.lerpVectors(W.plane.from, W.plane.to, k);
+      }
     }
     if (W.beacons) {
       const bt2 = performance.now() / 1000;
