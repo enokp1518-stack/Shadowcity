@@ -1259,6 +1259,21 @@
       G.sfx.cricketVol(nf * (pc === 'residential' ? 1 : 0.25));
       if (nf > 0.15) G.sfx.crickets(true);
     }
+    if (W.fireworksT === undefined) W.fireworksT = 0;
+    W.fireworksT -= dt;
+    if (nf > 0.6 && W.fireworksT <= 0) {
+      W.fireworksT = U.rand(4, 9);
+      const nc = W.cellCenter(7, 7);
+      const fx = nc.x + U.rand(-30, 30), fz = nc.z + U.rand(-30, 30);
+      G.sfx.explode();
+      const col = U.pick([0xff5a8a, 0x5ad0ff, 0xffd23e, 0x9a6aff, 0x6aff8a]);
+      G.spawnBurst(fx, U.rand(38, 52), fz, col, 14);
+      G.spawnBurst(fx, U.rand(36, 50), fz, 0xffffff, 6);
+      const flash = new THREE.PointLight(col, 8, 60);
+      flash.position.set(fx, 44, fz);
+      G.scene.add(flash);
+      G.effects.push({ obj: flash, ttl: 0.25, light: true });
+    }
     if (W.pigeons) {
       const pp = G.player ? G.player.pos : null;
       const pt2 = performance.now() / 1000;
