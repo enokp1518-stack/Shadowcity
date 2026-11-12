@@ -390,7 +390,7 @@
     frame.position.set(x - Math.sin(ry) * 0.1, y, z - Math.cos(ry) * 0.1);
     frame.rotation.y = ry;
     G.scene.add(frame);
-    glowMats.push({ isSign: true, m });
+    glowMats.push({ isSign: true, m, flicker: Math.random() < 0.3 });
   }
 
   function buildBlock(i, j) {
@@ -653,6 +653,39 @@
     } catch (e) { W.sunGlow = null; }
   }
 
+  function buildMoonGlow() {
+    try {
+      const c = document.createElement('canvas'); c.width = c.height = 128;
+      const x = c.getContext('2d');
+      const grd = x.createRadialGradient(64, 64, 0, 64, 64, 64);
+      grd.addColorStop(0, 'rgba(200,220,255,0.85)');
+      grd.addColorStop(0.4, 'rgba(150,180,255,0.3)');
+      grd.addColorStop(1, 'rgba(120,150,255,0)');
+      x.fillStyle = grd; x.fillRect(0, 0, 128, 128);
+      W.moonGlow = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false, fog: false }));
+      W.moonGlow.scale.set(160, 160, 1);
+      G.scene.add(W.moonGlow);
+    } catch (e) { W.moonGlow = null; }
+  }
+
+  function buildFireflies() {
+    const N = 42;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(N * 3);
+    const base = [];
+    for (let k = 0; k < N; k++) {
+      const cc = W.cellCenter(U.randi(0, 4), U.randi(6, 9));
+      const b = { x: cc.x + U.rand(-20, 20), y: U.rand(0.5, 3), z: cc.z + U.rand(-20, 20), ph: U.rand(0, 6.28), sp: U.rand(0.5, 1.3) };
+      pos[k * 3] = b.x; pos[k * 3 + 1] = b.y; pos[k * 3 + 2] = b.z;
+      base.push(b);
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    W.fireflies = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xd4ff7a, size: 0.28, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+    W.fireflies.userData.base = base;
+    W.fireflies.frustumCulled = false;
+    G.scene.add(W.fireflies);
+  }
+
   W.fountains = [];
 
   W.fogFar = 420;
@@ -695,7 +728,9 @@
     buildSmokestacks();
     buildTrafficLights();
     buildSunGlow();
+    buildMoonGlow();
     buildStars();
+    buildFireflies();
     buildRain();
 
     W.sunDisc = new THREE.Mesh(new THREE.SphereGeometry(22, 16, 12),
@@ -827,10 +862,10 @@
 
     const glow = nf;
     for (const m of glowMats) {
-      if (m.isSign) m.m.material.opacity = 0.25 + nf * 0.65;
+      if (m.isSign) m.m.material.opacity = m.flicker && Math.random() < 0.05 ? 0.15 : 0.25 + nf * 0.65;
       else m.emissiveIntensity = nf * 0.9;
     }
-    if (stars) stars.material.opacity = nf * 0.9;
+    if (stars) stars.material.opacity = nf * (0.72 + Math.sin(performance.now() / 1000 * 1.7) * 0.18);
     for (const g of lightGlows) g.material.opacity = nf * 0.75;
 
     if (W.sunDisc) {
@@ -843,6 +878,22 @@
       W.sunGlow.position.copy(sun.position).normalize().multiplyScalar(1250);
       W.sunGlow.material.opacity = Math.max(0.08, Math.max(0, elev) * 0.9);
       W.sunGlow.visible = elev > -0.1;
+    }
+    if (W.moonGlow) {
+      W.moonGlow.position.set(-sun.position.x, -sun.position.y, -sun.position.z).normalize().multiplyScalar(1250);
+      W.moonGlow.material.opacity = Math.max(0, Math.min(0.8, -elev)) * 0.85;
+      W.moonGlow.visible = elev < 0.1;
+    }
+    if (W.fireflies) {
+      W.fireflies.material.opacity = nf * 0.95;
+      const fa = W.fireflies.geometry.attributes.position.array;
+      const fb = W.fireflies.userData.base, ft = performance.now() / 1000;
+      for (let k = 0; k < fb.length; k++) {
+        fa[k * 3] = fb[k].x + Math.sin(ft * fb[k].sp + fb[k].ph) * 1.6;
+        fa[k * 3 + 1] = fb[k].y + Math.sin(ft * fb[k].sp * 1.4 + fb[k].ph * 2) * 0.7;
+        fa[k * 3 + 2] = fb[k].z + Math.cos(ft * fb[k].sp * 0.8 + fb[k].ph) * 1.6;
+      }
+      W.fireflies.geometry.attributes.position.needsUpdate = true;
     }
     if (W.skyDome) {
       W.skyDome.position.copy(G.camera.position);
